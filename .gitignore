@@ -1,0 +1,17 @@
+# Đồ của khách và dữ liệu riêng — không đưa lên repo
+_private/
+scripts-output/
+carousel-output/
+_backup/
+_archive/
+NHAT-KY-PHIEN*.md
+
+# Máy cá nhân
+.obsidian/
+.env
+.env.*
+*.jsonl
+.coverage
+__pycache__/
+.DS_Store
+Thumbs.db

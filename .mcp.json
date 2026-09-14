@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tokscript": {
+      "type": "http",
+      "url": "https://api.tokscript.com/mcp"
+    }
+  }
+}
