@@ -1,4 +1,4 @@
-﻿import json
+import json
 from copy import deepcopy
 from pathlib import Path
 
@@ -23,7 +23,7 @@ def draft(packet):
 
 
 def critic(revise=False):
-    return dict(verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
+    return dict(findings=[], verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
                 title_criteria=[True]*8, blocking_issues=['Fix scope'] if revise else [], notes=['Owner review pending'])
 
 

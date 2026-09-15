@@ -211,6 +211,18 @@ async function writeV2() {
     type: 'object', additionalProperties: false,
     properties: {
       verdict: { type: 'string', enum: ['PASS', 'REVISE'] },
+      findings: { type: 'array', items: {
+        type: 'object', additionalProperties: false,
+        properties: {
+          category: { type: 'string', enum: ['unsupported_identity', 'scope_broadening',
+            'unsupported_causality', 'quote_integrity', 'creator_truth_drift', 'external_fact_unsupported',
+            'market_validation_inflation', 'purchase_validation_inflation', 'contradiction_loss',
+            'creative_quality', 'voice', 'format', 'other'] },
+          severity: { type: 'string', enum: ['advisory', 'blocking'] }, message: string,
+          evidence_refs: { type: 'array', items: string }, affected_text: string,
+        },
+        required: ['category', 'severity', 'message', 'evidence_refs', 'affected_text'],
+      } },
       truth_preserved: { type: 'boolean' }, selected_intent_preserved: { type: 'boolean' },
       limitations_preserved: { type: 'boolean' }, external_claims_safe: { type: 'boolean' },
       creator_truth_preserved: { type: 'boolean' }, context_scope_preserved: { type: 'boolean' },
@@ -218,7 +230,7 @@ async function writeV2() {
       title_criteria: { type: 'array', minItems: 8, maxItems: 8, items: { type: 'boolean' } },
       blocking_issues: { type: 'array', items: string }, notes: { type: 'array', items: string },
     },
-    required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes'],
+    required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
   const criticize = draft => agent(shared + '\n' +
     CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
@@ -229,7 +241,20 @@ async function writeV2() {
     + 'notes are informational only, not unresolved defects. Independently read the relevant voice, story and knowledge '
     + 'sources before confirming source_verification_complete. Check external knowledge versus first-person history, '
     + 'customer versus creator experience, illustrative versus real history, rent versus business premises, '
-    + 'separate sources versus same situation, fake literal quotes, unsupported causality and market inflation.\n'
+    + 'separate sources versus same situation, fake literal quotes, unsupported causality and market inflation. '
+    + 'Emit every detected unresolved defect as a typed finding: category, severity, message, '
+    + 'evidence_refs (exact packet evidence IDs, or [] when no reference applies), and affected_text '
+    + '(exact draft passage when practical, otherwise empty). Findings are unresolved defects, not resolved history. '
+    + 'For unsupported_identity, scope_broadening, unsupported_causality, quote_integrity, creator_truth_drift, '
+    + 'external_fact_unsupported, market_validation_inflation, purchase_validation_inflation, contradiction_loss: '
+    + 'code ALWAYS forces REVISE, even if you report PASS or advisory severity or leave blocking_issues empty. '
+    + 'Never hide these defects inside free-form notes or label them creative_quality/voice/format/other. '
+    + 'Notes are advisory only; a detected hard-boundary defect MUST also be a typed finding. '
+    + 'In particular: two comments with unknown author identity do not establish two people. '
+    + 'Separate sources do not establish shared circumstances or why their experiences differ. '
+    + 'Adding perhaps/maybe does not ground an explanation of those sources. Distinguish a clearly hypothetical '
+    + 'illustration from a causal claim about the sources. A synthetic comment is not real customer testimony. '
+    + 'Retain creative expression, voice and storytelling; fix the unsupported claim, not the whole style.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
   const stage = V2_BOUND.stage

@@ -10,7 +10,7 @@ const context = { schema_version: 'reelo.execution-context.1', packet }
 const draft = () => ({ status: 'DRAFT', content: 'SYNTHETIC draft only', title: 'Synthetic title', format: 'Reel', issues: [],
   customer_evidence_ids: [packet.customer_truth.verified_insight.evidence_refs[0].evidence_id],
   external_dispositions: packet.external_evidence_requirements.map(r => ({ strategy_field: r.strategy_field, disposition: 'omitted', explanation: 'Not supported' })) })
-const pass = () => ({ verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
+const pass = () => ({ findings: [], verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
   external_claims_safe: true, creator_truth_preserved: true, context_scope_preserved: true,
   source_verification_complete: true, title_criteria: Array(8).fill(true), blocking_issues: [], notes: [] })
 async function run(queue, bound = true, inputContext = context, stageType = 'WRITER') {

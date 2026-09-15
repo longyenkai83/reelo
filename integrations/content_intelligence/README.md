@@ -162,3 +162,31 @@ and USD5, at most four stages (up to USD20 configured aggregate ceiling). This i
 measured billing. The controlled C5.4 run retains the prior explicit 900s/medium/USD5 settings
 per invocation. No global settings or tool grants change; no retry after the native wait ceiling.
 Private drafts/logs remain machine-local, outside Git. Technical PASS does not accept C5.
+
+## C5.5 — typed Critic findings (V2 only)
+
+Critic now requires `findings`: category, severity (`advisory`/`blocking`), message,
+`evidence_refs` (packet evidence IDs; [] when not applicable) and `affected_text` (draft
+passage when practical, otherwise empty). Categories are the nine hard boundaries below,
+plus creative_quality, voice, format and other. Unknown/malformed categories, missing
+findings, blank messages and unknown evidence references fail closed.
+
+Python always turns unsupported_identity, scope_broadening, unsupported_causality,
+quote_integrity, creator_truth_drift, external_fact_unsupported, market_validation_inflation,
+purchase_validation_inflation and contradiction_loss into blocking findings and REVISE.
+This holds even if raw severity is advisory, reported verdict is PASS, all booleans are true
+and blocking_issues is empty. Raw output remains untouched for audit. Normalized findings
+retain reported_severity and effective severity; normalized blocking_issues drive the
+existing state machine. Other categories follow declared severity/current rubric.
+
+Notes are advisory only. Critic must put each detected unresolved hard-boundary defect into
+a typed finding rather than hiding it in notes or a style category. In particular anonymous
+comment counts do not establish people; separate sources do not establish shared context or
+why experiences differ; hedging does not supply causal evidence. Creative expression stays
+allowed. No second Critic, semantic regex, extra LLM layer or generic quality framework.
+
+Deterministic tests prove handling of supplied typed findings; they do not prove automatic
+semantic detection. If the model omits/mislabels a defect while emitting a structurally valid
+empty findings list, code cannot discover that from free-form notes without semantic analysis.
+Human quality review remains necessary. C5.4 host lifecycle/permission/identity/Q1 remain closed;
+at most one rewrite and the same final truth/title checks remain. No legacy critic change.

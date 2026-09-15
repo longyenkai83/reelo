@@ -49,3 +49,9 @@ per stage (Writer, Critic1, optional Rewrite, Critic2), preserving this creative
 The model cannot decide stage transitions or final execution status. Persist/validate each
 terminal stage before continuing; stop UNKNOWN on malformed/stopped/mismatched output, retaining
 all verified predecessors. No retry/resume framework. C5.3 permission rules remain unchanged.
+
+C5.5: Critic emits typed findings. The nine hard truth/scope categories always block in
+Python regardless of model severity or verdict; notes cannot be used to downgrade a detected
+hard-boundary defect. Raw versus normalized findings retain the audit trail. Anonymous comment
+counts are not verified people; separate sources do not explain each other's experiences.
+One Critic only, existing maximum one rewrite, no extra semantic checker or legacy changes.

@@ -34,7 +34,28 @@ class WriterOutput(StageModel):
     external_dispositions: list[Disposition]
 
 
+FindingCategory = Literal[
+    'unsupported_identity', 'scope_broadening', 'unsupported_causality', 'quote_integrity',
+    'creator_truth_drift', 'external_fact_unsupported', 'market_validation_inflation',
+    'purchase_validation_inflation', 'contradiction_loss', 'creative_quality', 'voice', 'format', 'other',
+]
+HARD_BLOCK_CATEGORIES = frozenset((
+    'unsupported_identity', 'scope_broadening', 'unsupported_causality', 'quote_integrity',
+    'creator_truth_drift', 'external_fact_unsupported', 'market_validation_inflation',
+    'purchase_validation_inflation', 'contradiction_loss',
+))
+
+
+class CriticFinding(StageModel):
+    category: FindingCategory
+    severity: Literal['advisory', 'blocking']
+    message: str
+    evidence_refs: list[str]
+    affected_text: str
+
+
 class CriticOutput(StageModel):
+    findings: list[CriticFinding]
     verdict: Literal['PASS', 'REVISE']
     truth_preserved: bool
     selected_intent_preserved: bool
@@ -72,12 +93,24 @@ def validate_output(stage_type, raw, context):
     if len(critic['title_criteria']) != 8 or any(not s.strip() for s in critic['notes'] + critic['blocking_issues']):
         raise ValueError('malformed_critic_result')
     blocking = list(critic['blocking_issues'])
+    normalized_findings = []
+    insight = context['packet']['customer_truth']['verified_insight']
+    allowed_refs = {r['evidence_id'] for r in insight['evidence_refs']}
+    allowed_refs.update(c['counter_ref']['evidence_id'] for c in insight['contradictions'])
+    for finding in critic['findings']:
+        if not finding['message'].strip() or not set(finding['evidence_refs']) <= allowed_refs:
+            raise ValueError('invalid_critic_finding')
+        must_block = finding['category'] in HARD_BLOCK_CATEGORIES or finding['severity'] == 'blocking'
+        normalized_findings.append(dict(finding, reported_severity=finding['severity'],
+                                        severity='blocking' if must_block else 'advisory'))
+        if must_block:
+            blocking.append(finding['category']+': '+finding['message'])
     blocking.extend(key+'_not_confirmed' for key in CHECKS if critic[key] is not True)
     if not all(critic['title_criteria']):
         blocking.append('title_criteria_not_passed')
     if critic['verdict'] == 'REVISE' and not blocking:
         blocking.append('revise_without_explanation')
-    return dict(critic, reported_verdict=critic['verdict'],
+    return dict(critic, findings=normalized_findings, reported_verdict=critic['verdict'],
                 verdict='REVISE' if blocking else 'PASS', blocking_issues=list(dict.fromkeys(blocking)))
 
 
