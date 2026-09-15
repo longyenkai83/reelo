@@ -1,3 +1,9 @@
+
+> **Cổng V2:** Nếu đang thi hành Content Intelligence Packet đã được adapter xác thực,
+> đọc `integrations/content_intelligence/V2-BOUNDARY.md` trước. Quy định V2 trong đó
+> ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
+> phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
+
 # GATE — Cửa khẩu trước khi viết (Psychology là nền móng, ~15% hệ thống)
 
 **Chưa trả lời xong 3 câu này thì CHƯA viết một chữ nào.** Đây là Bước 0 bắt buộc của mọi content.

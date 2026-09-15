@@ -3,6 +3,13 @@ name: viet-bai
 description: CỬA NGÕ DUY NHẤT để viết content (Router). Kích hoạt khi người dùng gõ /viet-bai HOẶC các cụm tự nhiên: "viết bài", "tạo content", "làm content", "viết script", "viết nội dung", "viết reel/bài ngắn/bài dài/video dài/carousel", kèm link/yêu cầu. Hiển thị danh sách đánh số 1–5 hỏi định dạng đầu ra (Reel · Bài ngắn · Bài dài · Video dài · Carousel), KHÔNG tự viết ngay. Sau khi người dùng chọn số, route lệnh + toàn bộ ngữ cảnh về skill lõi viet-script (backend) để thi công: bóc băng → viết → Ban Giám Khảo critic (xuất khi VERDICT=ĐẠT).
 ---
 
+> **Cổng V2:** Nếu đang thi hành Content Intelligence Packet đã được adapter xác thực,
+> đọc `integrations/content_intelligence/V2-BOUNDARY.md` trước. Quy định V2 trong đó
+> ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
+> phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
+
+
+
 # /viet-bai — CỔNG CHUYỂN HƯỚNG (Router)
 
 Skill này **chỉ làm 2 việc**: (1) hỏi định dạng, (2) trỏ về skill lõi `viet-script`. **KHÔNG tự bóc băng/viết** — đó là việc của `viet-script`.

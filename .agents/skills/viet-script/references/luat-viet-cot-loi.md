@@ -1,3 +1,9 @@
+
+> **Cổng V2:** Nếu đang thi hành Content Intelligence Packet đã được adapter xác thực,
+> đọc `integrations/content_intelligence/V2-BOUNDARY.md` trước. Quy định V2 trong đó
+> ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
+> phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
+
 ### LUẬT VIẾT CỐT LÕI (BẮT BUỘC ĐỌC TRƯỚC KHI LẬP DÀN Ý)
 
 **1. QUY TẮC GHÉP 2 NGUỒN (CHẠM x SÂU)**

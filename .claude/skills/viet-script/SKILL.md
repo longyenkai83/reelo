@@ -4,6 +4,13 @@ description: BACKEND ORCHESTRATOR lõi thi công viết bài. Nguồn cấp từ
 disable-model-invocation: true
 ---
 
+> **Cổng V2:** Nếu đang thi hành Content Intelligence Packet đã được adapter xác thực,
+> đọc `integrations/content_intelligence/V2-BOUNDARY.md` trước. Quy định V2 trong đó
+> ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
+> phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
+
+
+
 ### 0. KIỂM DATA BRAND (bản bán — chạy TRƯỚC mọi việc)
 - [ ] IF **không có** `_private/brand/<brand>/` (ma trận · voice · hồ sơ · kho-cta) → **DỪNG, KHÔNG viết.** Đây là bản BÁN chưa khai brand → hướng người dùng chạy **`/bat-dau`** để tạo hồ sơ brand trước. *(Bản riêng của chủ luôn có sẵn `_private/` → bỏ qua bước này.)*
 

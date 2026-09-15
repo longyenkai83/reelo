@@ -1,3 +1,11 @@
+
+> **V2 handoff:** Với Content Intelligence Packet, đọc
+> `integrations/content_intelligence/V2-BOUNDARY.md`. Main dùng outbox
+> `notion_handoff.py`: recheck current ledger → prepare/claim → tạo đúng một DRAFT
+> tại đích owner cho phép → fetch xác minh status/Source ID/data source → acknowledge URL.
+> Không gọi lại Workflow bằng topic/Markdown, không ghi _INDEX hoặc status đã duyệt/đã đăng
+> chỉ vì Critic PASS. Không có packet V2: giữ quy trình legacy bên dưới.
+
 # CHẾ ĐỘ BATCH — chạy hàng loạt từ bảng Notion (bán tự động)
 
 > Tính năng phụ của skill `viet-script`. Chỉ dùng khi anh gõ **"chạy hết link trong inbox"** / **"chạy batch"**. Quy trình thường (1 link / 1 lần) KHÔNG cần file này.

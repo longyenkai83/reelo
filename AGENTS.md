@@ -1,3 +1,14 @@
+> Trước khi sửa kiến trúc/product logic V2: đọc Insight docs/v2/00–16 và contracts README
+> trên nhánh `v2-phase-9-reelo-integration`; đọc boundary/runbook trong
+> `integrations/content_intelligence/`. Nếu xung đột accepted decisions/Strategyzer: STOP, báo lại.
+> Phase 9 đang chờ architect review; không tự mở phase kế tiếp.
+
+
+> **Cổng V2:** Nếu đang thi hành Content Intelligence Packet đã được adapter xác thực,
+> đọc `integrations/content_intelligence/V2-BOUNDARY.md` trước. Quy định V2 trong đó
+> ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
+> phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
+
 # AGENTS.md — Reelo (bản của chị Trịnh Nhi Hiền)
 
 > **Project TỰ ĐỦ.** Mọi luật ở file này + file trong project. Mở folder này trong Codex là chạy đúng.

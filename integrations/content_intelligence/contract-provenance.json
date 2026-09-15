@@ -1,0 +1,16 @@
+{
+  "source_commit": "ca09ae4d984f925a10c683bb1ddce9d448249319",
+  "source_hashes": {
+    "signal_models.py": "3703bace2ffaeacbb84067ec16728701c78c87aa5b68bb1731e3be214f71aa42",
+    "customer_context_models.py": "9c4a9b131d6920801001825ce1173b239bb49daa917156a6a58757d162afc371",
+    "pattern_models.py": "52f01c7de12b053266ddf1079ecbc27fa4a53d3947649fc9e92a9481de8c8cdd",
+    "evidence_models.py": "254420c9208754f8d619ae59e8335f043ac55254b490d2f2a79c512065ab5772",
+    "governance_models.py": "1ec9487586849ac1567f0cc90041daa235bb94f729e7bdadb4ee74822b4372a2",
+    "content_route_models.py": "74c7e0bc00531dc5a1a01ed3f3291b6e7866f8b89dd717a5f3d93fdb2983b051",
+    "content_selection.py": "0daa8c36476ff2cd8778732985a2234e9a9e89e8bf8bc8f9fde816053e1f1f5e",
+    "content_packet_models.py": "b077224fd3e5dae77595db44ba2cc759f3e765038de8adec6646c40d073349dc",
+    "governance_engine.py": "2d7b33501ac3e8d5131cfae4233c90985723df9b4f16510d1737bf21e466224b",
+    "content_packet_builder.py": "560f1db79533a970a7f4ada7d0955bf119bfc3b97ff1723bbfb816ce45c80253",
+    "content_packet_validator.py": "9c7e8297b1fa7248b7cbff710bd07af7b108873cc079e6fcd65b172cd9a6b870"
+  }
+}
