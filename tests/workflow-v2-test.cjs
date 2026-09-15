@@ -10,7 +10,7 @@ const context = { schema_version: 'reelo.execution-context.1', packet }
 const draft = () => ({ status: 'DRAFT', content: 'SYNTHETIC draft only', title: 'Synthetic title', format: 'Reel', issues: [],
   customer_evidence_ids: [packet.customer_truth.verified_insight.evidence_refs[0].evidence_id],
   external_dispositions: packet.external_evidence_requirements.map(r => ({ strategy_field: r.strategy_field, disposition: 'omitted', explanation: 'Not supported' })) })
-const pass = () => ({ findings: [], verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
+const pass = () => ({ title_meaning_clear: true, reader_centered_pov: true, non_prescriptive_tone: true, findings: [], verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
   external_claims_safe: true, creator_truth_preserved: true, context_scope_preserved: true,
   source_verification_complete: true, title_criteria: Array(8).fill(true), blocking_issues: [], notes: [] })
 async function run(queue, bound = true, inputContext = context, stageType = 'WRITER') {
@@ -38,7 +38,7 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
       const {prompt, options} = r.prompts[0]
       for (const text of ['SELECTED_OPENING_' + kind, 'SELECTED_ARGUMENT_' + kind, 'No forced axis',
                          'psychology or story treatment', 'independent Critic must read',
-                         'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET']) assert(prompt.includes(text))
+                         'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET', 'OWNER-CONFIRMED V2 QUALITY', 'personal-story-first', 'Do not reuse it or merely', 'Keep the reader', 'Invite reflection']) assert(prompt.includes(text))
       if (stageType === 'WRITER') {
         assert(prompt.includes('**Zone B selected direction; no forced axis**'))
         assert(!prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))
@@ -46,6 +46,10 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
       if (stageType.startsWith('CRITIC')) {
         assert.equal(options.agentType, 'critic-ban-giam-khao')
         assert.equal(options.schema.properties.title_criteria.minItems, 8)
+        for (const key of ['title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone']) {
+          assert(options.schema.required.includes(key))
+        }
+        assert(prompt.includes('do not count pronouns'))
         assert(prompt.includes('Never trust writer self-certification'))
       }
       assert.equal(options.schema.additionalProperties, false)

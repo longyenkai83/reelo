@@ -23,7 +23,7 @@ def draft(packet):
 
 
 def critic(revise=False):
-    return dict(findings=[], verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
+    return dict(title_meaning_clear=True, reader_centered_pov=True, non_prescriptive_tone=True, findings=[], verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
                 title_criteria=[True]*8, blocking_issues=['Fix scope'] if revise else [], notes=['Owner review pending'])
 
 

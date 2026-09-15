@@ -55,3 +55,9 @@ Python regardless of model severity or verdict; notes cannot be used to downgrad
 hard-boundary defect. Raw versus normalized findings retain the audit trail. Anonymous comment
 counts are not verified people; separate sources do not explain each other's experiences.
 One Critic only, existing maximum one rewrite, no extra semantic checker or legacy changes.
+
+C5.6 owner quality requirements apply to V2 Writer, rewrite and Critic: reader-centered POV
+(with a selected personal-story-first exception), immediately meaningful/natural/relevant titles,
+and an inviting non-prescriptive tone. No pronoun counting; no forced emotion or poetic wordplay.
+Three explicit semantic quality booleans must pass in addition to existing truth/title gates.
+Do not reuse/paraphrase the owner-rejected C5.5 title. Existing truth hard categories stay intact.

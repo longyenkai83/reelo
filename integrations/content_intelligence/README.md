@@ -190,3 +190,26 @@ semantic detection. If the model omits/mislabels a defect while emitting a struc
 empty findings list, code cannot discover that from free-form notes without semantic analysis.
 Human quality review remains necessary. C5.4 host lifecycle/permission/identity/Q1 remain closed;
 at most one rewrite and the same final truth/title checks remain. No legacy critic change.
+
+## C5.6 — owner-confirmed V2 voice / title / tone
+
+Owner quality review of C5.5 FAILED despite its technical PASS. For V2, keep the reader
+("ban/bạn") central; useful real creator stories/observations may appear, then return focus
+to the reader. An explicitly selected personal-story-first format may legitimately foreground
+the creator. This is semantic judgment, never pronoun counts or a mechanical ratio.
+
+Titles need immediate semantic meaning, direct selected-angle relevance, natural Vietnamese,
+reader usefulness and meaningful curiosity. No awkward poetic opposition or cleverness for
+its own sake. The owner-rejected C5.5 title must not be reused or merely paraphrased. The
+existing title system/eight checks remain; no broad legacy title change.
+
+Invite reflection through questions, suggestions and tentative frames. Do not lecture, diagnose
+reader motives/problems without evidence or present a proposed framework as universally true.
+Creator experience is one lens, not imposed authority. Reader address/questions never waive truth.
+
+Three required V2 Critic booleans: title_meaning_clear, reader_centered_pov,
+non_prescriptive_tone. A false value deterministically blocks/REVISE; missing/non-boolean values
+fail closed. Critic must describe failures as blocking creative_quality/voice findings; truth
+violations retain their existing hard category. Raw review, one Critic, maximum one rewrite,
+host lifecycle, permission, Q1, packet/provenance and all C5.5 hard categories are unchanged.
+Semantic detection remains fallible; technical PASS is not owner quality acceptance.

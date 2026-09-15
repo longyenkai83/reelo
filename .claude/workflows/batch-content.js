@@ -190,7 +190,25 @@ async function writeV2() {
     Return the structured draft once the necessary checks are complete; no full-vault audit.
     Use only the read files provided. Do not guess private source paths. Missing required creative
     references must be reported. A synthetic fixture is not a real customer endorsement.`
-  const shared = constraints + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
+  const ownerQuality = `OWNER-CONFIRMED V2 QUALITY (Anh Tuan, C5.6):
+    Keep the reader (ban / bạn) the center of gravity. Creator voice (minh / mình, toi / tôi,
+    Hien / Hiền) is welcome for a useful real story, lived credibility or brief observation;
+    then return attention to the reader. Do not make reader-centered decision support a creator
+    monologue. More creator voice is legitimate only when the selected intent/format is explicitly
+    personal-story-first, not a label invented to bypass this requirement. Do not count pronouns.
+    A title must make semantic sense immediately, relate directly to the selected problem/angle,
+    use natural Vietnamese and offer useful curiosity/tension to the reader. Do not rely on
+    awkward poetic contrast, meaningless opposition or AI-style wordplay for its own sake.
+    Owner rejected "Tiền thuê nặng, hay phần giữ lại đang mỏng?". Do not reuse it or merely
+    paraphrase it; choose a meaningfully clear title from the selected problem, not this word game.
+    Invite reflection rather than lecture, diagnose or impose conclusions. Questions, suggestions,
+    tentative possibilities and real creator experience offered as one lens are welcome.
+    Do not tell readers what their real problem is without evidence, prescribe what they should
+    think, or force a proposed framework as universally true. Keep the reader's agency.
+    Keep natural Vietnamese and psychological resonance; do not add emotion just for intensity.
+    All truth guards still apply: reader-centered address is not permission to invent reader facts,
+    and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
+  const shared = constraints + '\n' + ownerQuality + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
   const string = { type: 'string' }
   const writerSchema = {
@@ -210,6 +228,8 @@ async function writeV2() {
   const criticSchema = {
     type: 'object', additionalProperties: false,
     properties: {
+      title_meaning_clear: { type: 'boolean' }, reader_centered_pov: { type: 'boolean' },
+      non_prescriptive_tone: { type: 'boolean' },
       verdict: { type: 'string', enum: ['PASS', 'REVISE'] },
       findings: { type: 'array', items: {
         type: 'object', additionalProperties: false,
@@ -230,7 +250,7 @@ async function writeV2() {
       title_criteria: { type: 'array', minItems: 8, maxItems: 8, items: { type: 'boolean' } },
       blocking_issues: { type: 'array', items: string }, notes: { type: 'array', items: string },
     },
-    required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
+    required: ['title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
   const criticize = draft => agent(shared + '\n' +
     CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
@@ -255,6 +275,15 @@ async function writeV2() {
     + 'Adding perhaps/maybe does not ground an explanation of those sources. Distinguish a clearly hypothetical '
     + 'illustration from a causal claim about the sources. A synthetic comment is not real customer testimony. '
     + 'Retain creative expression, voice and storytelling; fix the unsupported claim, not the whole style.\n'
+    + 'Review three owner quality checks semantically, independently of the eight existing title boxes. '
+    + 'title_meaning_clear requires immediate meaning, relevance to B, natural Vietnamese, reader usefulness '
+    + 'and no meaningless contrast or empty AI cleverness. reader_centered_pov requires the reader to '
+    + 'remain central unless the selected format is explicitly personal-story-first; useful creator cameos '
+    + 'are welcome, do not count pronouns. non_prescriptive_tone requires invitation rather than lecturing, '
+    + 'unsupported diagnosis or a universally imposed framework. A question mark alone is not enough. '
+    + 'If any check fails, set its boolean false and emit a blocking creative_quality or voice finding '
+    + 'with affected_text and explanation. Do not downgrade an owner requirement failure to an advisory. '
+    + 'If it also crosses a truth boundary, retain the appropriate hard category; quality never overrides truth.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
   const stage = V2_BOUND.stage

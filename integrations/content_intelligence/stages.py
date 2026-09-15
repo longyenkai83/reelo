@@ -55,6 +55,9 @@ class CriticFinding(StageModel):
 
 
 class CriticOutput(StageModel):
+    title_meaning_clear: bool
+    reader_centered_pov: bool
+    non_prescriptive_tone: bool
     findings: list[CriticFinding]
     verdict: Literal['PASS', 'REVISE']
     truth_preserved: bool
@@ -68,6 +71,8 @@ class CriticOutput(StageModel):
     blocking_issues: list[str]
     notes: list[str]
 
+
+QUALITY_CHECKS = ('title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone')
 
 CHECKS = ('truth_preserved', 'selected_intent_preserved', 'limitations_preserved',
           'external_claims_safe', 'creator_truth_preserved', 'context_scope_preserved',
@@ -106,6 +111,7 @@ def validate_output(stage_type, raw, context):
         if must_block:
             blocking.append(finding['category']+': '+finding['message'])
     blocking.extend(key+'_not_confirmed' for key in CHECKS if critic[key] is not True)
+    blocking.extend(key+'_not_confirmed' for key in QUALITY_CHECKS if critic[key] is not True)
     if not all(critic['title_criteria']):
         blocking.append('title_criteria_not_passed')
     if critic['verdict'] == 'REVISE' and not blocking:
