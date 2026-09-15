@@ -27,12 +27,13 @@ def test_canonical_contract_parity(packet):
     assert p.model_dump(mode='json') == packet
 
 
-@pytest.mark.parametrize('change', ['schema', 'time', 'source', 'quote', 'permission', 'type', 'missing', 'lineage'])
+@pytest.mark.parametrize('change', ['schema', 'time', 'source', 'quote', 'permission', 'type', 'missing', 'lineage', 'counter_quote'])
 def test_invalid_never_authorizes_or_launches(packet, tmp_path, change):
     p = deepcopy(packet)
     if change == 'schema': p['schema_version'] = 'v3'
     if change == 'time': p['created_at'] = '2000-01-01T00:00:00Z'
     if change == 'source': p['customer_truth']['source_snapshots'][0]['text'] = 'Invented'
+    if change == 'counter_quote': p['customer_truth']['verified_insight']['contradictions'][0]['counter_ref']['evidence_quote'] = 'Invented counter quote'
     if change == 'quote': p['customer_truth']['verified_insight']['evidence_refs'][0]['evidence_quote'] = 'Invented'
     if change == 'permission': p['creative_execution']['constraints']['no_fake_statistics'] = False
     if change == 'type': p['content_strategy']['truth_type'] = 'OBSERVED'
@@ -167,3 +168,40 @@ def test_runtime_profile_mismatch_is_not_accepted(tmp_path, field, value):
     event[field] = value
     with pytest.raises(ValueError, match='profile_mismatch'):
         verify_runtime_profile([event], config)
+
+
+@pytest.mark.parametrize('effort', [None, 'medium', 'high'])
+def test_effort_override_is_session_local_and_keeps_safety(packet, tmp_path, monkeypatch, effort):
+    from integrations.content_intelligence.host import HostConfig, NativeHost
+    home = tmp_path/'home'
+    settings_file = home/'.claude/settings.json'
+    settings_file.parent.mkdir(parents=True)
+    settings_file.write_text('{"effortLevel":"xhigh","enabledPlugins":{"example":true}}')
+    before = settings_file.read_bytes()
+    monkeypatch.setattr(Path, 'home', classmethod(lambda cls: home))
+    workspace = tmp_path/'workspace'
+    script = workspace/'.claude/workflows/batch-content.js'
+    script.parent.mkdir(parents=True)
+    script.write_text('export const meta = {};\n/* V2_BOUND_CONTEXT */')
+    monkeypatch.setattr(HostConfig, 'verify', lambda self: None)
+    seen = []
+    def stop_at_launch(argv, **kw):
+        seen.extend(argv)
+        raise RuntimeError('test launch boundary')
+    monkeypatch.setattr(subprocess, 'Popen', stop_at_launch)
+    store = IntakeStore(tmp_path/'store.db')
+    receipt = store.intake(packet)
+    execution, _ = store.reserve(receipt, 'test')
+    config = HostConfig(executable=tmp_path/'claude.exe', execution_workspace=workspace,
+                        state_directory=tmp_path/'runs', effort_level=effort)
+    with pytest.raises(RuntimeError, match='test launch boundary'):
+        NativeHost(config)(execution, store.context(receipt))
+    settings = json.loads(seen[seen.index('--settings')+1])
+    assert settings.get('effortLevel') == effort
+    assert settings['disableAllHooks'] is True
+    assert settings['enabledPlugins'] == {'example': False}
+    assert seen[seen.index('--tools')+1] == 'Workflow,Read'
+    assert seen[seen.index('--permission-mode')+1] == 'dontAsk'
+    assert seen[seen.index('--mcp-config')+1] == '{"mcpServers":{}}'
+    assert settings_file.read_bytes() == before
+    assert store.context(receipt)['packet'] == packet

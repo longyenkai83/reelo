@@ -20,6 +20,7 @@ class HostConfig:
     timeout_seconds: int = 600
     max_budget_usd: float = 5.0
     version: str = '2.1.270'
+    effort_level: str | None = None
 
     def verify(self):
         if not self.executable.is_absolute() or not self.executable.is_file():
@@ -33,6 +34,8 @@ class HostConfig:
         if (type(self.timeout_seconds) is not int or not 1 <= self.timeout_seconds <= 3600
                 or type(self.max_budget_usd) not in (int, float) or not 0 < self.max_budget_usd <= 50):
             raise ValueError('invalid_host_limits')
+        if self.effort_level not in (None, 'low', 'medium', 'high'):
+            raise ValueError('invalid_host_effort_level')
         for path in self.read_files:
             if not path.is_absolute() or not path.is_file():
                 raise ValueError('explicit_read_file_required')
@@ -123,6 +126,8 @@ class NativeHost:
         script.write_bytes(script_text.replace('\r\n', '\n').encode('utf-8'))
         (work/'intake.json').write_text(encoded(binding), encoding='utf-8')
         settings = {'disableAllHooks': True, 'enabledPlugins': {}}
+        if config.effort_level is not None:
+            settings['effortLevel'] = config.effort_level
         for path in (Path.home()/'.claude/settings.json',
                      config.execution_workspace/'.claude/settings.json',
                      config.execution_workspace/'.claude/settings.local.json'):
@@ -193,6 +198,7 @@ class NativeHost:
             Path(artifact['path']).write_text(artifact['content'], encoding='utf-8')
         result.host = dict(correlation, executable=str(config.executable), version=config.version,
                            cwd=str(config.execution_workspace), profile='read-only-controlled-cli',
-                           script_hash=value_hash(script_text), assets=assets)
+                           script_hash=value_hash(script_text), assets=assets,
+                           requested_effort_level=config.effort_level or 'inherited')
         (work/'result.json').write_text(result.model_dump_json(indent=2), encoding='utf-8')
         return result

@@ -57,6 +57,11 @@ async function run(queue, bound = true, inputContext = context) {
   assert.equal(r.result.execution.status, 'DRAFT_READY')
   r = await run([new Error('child died')])
   assert.equal(r.result.execution.status, 'CRITIC_FAILED')
+  const withCounter = draft()
+  withCounter.customer_evidence_ids.push(packet.customer_truth.verified_insight.contradictions[0].counter_ref.evidence_id)
+  r = await run([withCounter, pass()])
+  assert.equal(r.result.execution.status, 'DRAFT_READY', 'validated counter evidence must reach Critic')
+  assert.equal(r.prompts.length, 2)
   let bad = draft(); bad.customer_evidence_ids = ['invented']
   r = await run([bad]); assert.equal(r.result.execution.status, 'CRITIC_FAILED'); assert.equal(r.prompts.length, 1)
   r = await run([], false); assert(Array.isArray(r.result)); assert.equal(r.prompts.length, 0)

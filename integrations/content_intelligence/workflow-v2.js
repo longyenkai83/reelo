@@ -15,7 +15,9 @@ async function writeV2() {
   const packet = context.packet
   const immutable = JSON.stringify(context)
   const identity = JSON.stringify(execution.receipt)
-  const refs = packet.customer_truth.verified_insight.evidence_refs
+  // Counter-evidence is validated Zone A evidence too; never force its omission.
+  const insight = packet.customer_truth.verified_insight
+  const refs = [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)]
   const constraints = `V2 takes precedence over conflicting legacy source/psychology/profile rules.
     A is the only customer truth. B is selected PROPOSED intent, never confirmed demand.
     Do not mine a profile, campaign, Story, RAW or WIKI for new audience facts, jobs/pains/gains,

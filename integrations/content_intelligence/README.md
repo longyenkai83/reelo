@@ -18,6 +18,10 @@ The Insight operator owns a local JSON config with four required keys:
 ```
 
 Optional operator limits: `timeout_seconds` (default 600, maximum 3600) and `max_budget_usd` (default 5).
+Optional `effort_level` (`low`, `medium`, `high`) overrides reasoning effort for this
+one host session through native settings. Omit it to keep the inherited user setting.
+It never edits user/project settings, changes model, removes guards or grants tools.
+The result records the requested effort (not a measured thinking-token guarantee).
 These are execution limits, not quality thresholds. A timeout remains UNKNOWN, never auto-retried.
 
 Replace examples with actual verified paths. `read_files` must include the creative rules,
@@ -78,3 +82,8 @@ Quality results and private drafts remain local; refer to the C5.1 owner review 
 No acceptance follows from offline tests alone. UNKNOWN remains UNKNOWN and must not be
 blindly relaunched; a separately identified synthetic controlled test is not a recovery
 or completion of the earlier execution. No merge, Source Router or Unified Web work.
+
+The draft evidence-ID gate includes both verified_insight.evidence_refs and its validated
+contradictions[].counter_ref. Counter-evidence must survive into the independent Critic;
+unknown IDs and invented counter quotes still fail. This changes no source span/hash or
+customer truth. The C5.1 live medium-effort draft exposed this false rejection before Critic.
