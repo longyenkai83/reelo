@@ -88,7 +88,7 @@ class PlanProposal(Model):
 
 
 class Review(Model):
-    decision: Literal['approved', 'rejected', 'deferred']
+    decision: Literal['approved', 'EDIT_AND_APPROVE', 'rejected', 'deferred']
     reviewer: str = Field(min_length=1)
     human_attested: Literal[True]
     approval_kind: Literal['human', 'synthetic_fixture'] = 'human'
@@ -98,6 +98,8 @@ class Review(Model):
     edited_hook: str | None = None
     edited_title: str | None = None
     edited_outline: list[str] | None = None
+    selected_mode: Literal['REEL', 'SHORT_ARTICLE', 'LONG_ARTICLE'] | None = None
+    knowledge_choice_policy: str | None = None
 
 
 def source_role(path):
@@ -235,6 +237,9 @@ class PlanStore:
 
     def review(self, plan_id, raw):
         review = Review.model_validate(raw).model_dump()
+        owner_decision = review['decision']
+        if owner_decision == 'EDIT_AND_APPROVE':
+            review['decision'] = 'approved'
         plan = self.get(plan_id); p = plan['proposal']
         if review['expected_plan_hash'] != plan['plan_hash']: raise ValueError('stale_plan_review')
         if review['decision'] == 'approved' and (plan['blockers'] or plan_blockers(p)):
@@ -253,6 +258,9 @@ class PlanStore:
         outline = review['edited_outline'] if review['edited_outline'] is not None else p['outline']
         if not outline or not all(s.strip() for s in outline): raise ValueError('empty_approved_outline')
         result = dict(approval_id='CPA-'+uuid4().hex, plan=plan, **review,
+                      owner_decision=owner_decision,
+                      limitations=p.get('limitations', []),
+                      publication_requirements=plan.get('review_view', {}).get('publication_requirements', []),
                       approved_at=datetime.now(timezone.utc).isoformat() if review['decision'] == 'approved' else None,
                       creative_plan_id=plan_id, plan_revision=plan['plan_revision'],
                       packet_id=p['packet_id'], angle_id=p['angle_id'],

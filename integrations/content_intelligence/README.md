@@ -292,3 +292,20 @@ can prove identity, causality or relevance. Shared reports redact private suppor
 Writer/Critic receive the same approved snapshot including every limitation, advisory and
 publication requirement. C5.9 itself runs only offline validation and tests: no Planner rerun,
 Writer, Critic, rewrite, Notion or publication. Owner reviews ONE gate artifact before any drafting.
+
+## C5.10 — owner edit approval and output modes
+
+Explicit EDIT_AND_APPROVE is stored as owner_decision alongside normalized decision=approved
+for existing orchestration. selected_mode (REEL/SHORT_ARTICLE/LONG_ARTICLE), optional knowledge
+policy, limitations and publication requirements travel with the immutable approval snapshot.
+Original plan/revision/hash remain. human kind records actual owner authorization even for a
+synthetic packet; this is neither model approval nor final article approval.
+
+REEL means spoken Vietnamese with breath and conversational rhythm, never a short article read
+aloud. SHORT_ARTICLE/LONG_ARTICLE are written content. Writer/Critic retain the approved mode.
+Title/opening must be immediately clear; no deliberate obscurity or cleverness before meaning.
+Exact owner edits override candidate wording. Optional knowledge may be omitted when unhelpful.
+
+Creative approval does not clear UNKNOWN execution history. The unchanged reserve guard raises
+reconcile_previous_execution_first. C5.10 does not reconcile, rewrite history or use a new intake
+database to bypass the guard. Host lifecycle/permissions and truth categories remain unchanged.

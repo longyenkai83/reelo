@@ -266,3 +266,34 @@ def test_approved_snapshot_cannot_mutate_stored_plan(setup):
             db.execute('UPDATE plans SET body=? WHERE plan_id=?',
                 (json.dumps(approved['plan']), approved['creative_plan_id']))
         store.approved(approved['approval_id'], context, assets)
+
+
+def test_real_edit_approval_keeps_mode_policy_and_plan_snapshot(setup):
+    _, context, original, assets, store = setup
+    plan = original['plan']
+    approved = store.review(plan['creative_plan_id'], dict(decision='EDIT_AND_APPROVE',
+        reviewer='Product Owner', human_attested=True, approval_kind='human',
+        expected_plan_hash=plan['plan_hash'], hook_id='h1', title_id='t1',
+        edited_hook='Owner exact hook', edited_title='Owner exact title',
+        selected_mode='SHORT_ARTICLE', knowledge_choice_policy='Optional only when useful'))
+    assert approved['decision'] == 'approved' and approved['owner_decision'] == 'EDIT_AND_APPROVE'
+    assert approved['approval_kind'] == 'human'
+    assert approved['selected_mode'] == 'SHORT_ARTICLE'
+    assert approved['selected_hook']['text'] == 'Owner exact hook'
+    assert approved['selected_title']['text'] == 'Owner exact title'
+    assert approved['approved_outline'] == plan['proposal']['outline']
+    assert approved['plan'] == plan and approved['publication_requirements']
+    assert store.approved(approved['approval_id'], context, assets) == approved
+    approved['selected_mode'] = 'REEL'
+    assert store.approved(approved['approval_id'], context, assets)['selected_mode'] == 'SHORT_ARTICLE'
+
+
+def test_unknown_history_still_blocks_owner_approved_new_execution(setup, tmp_path):
+    packet, context, original, assets, plans = setup
+    intake = IntakeStore(tmp_path/'guard.sqlite')
+    receipt = intake.intake(packet)
+    previous, _ = intake.reserve(receipt, 'previous-planner')
+    previous.status = 'UNKNOWN'; intake.finish(previous)
+    with pytest.raises(ValueError, match='reconcile_previous_execution_first'):
+        intake.reserve(receipt, 'owner-approved-writer', previous.generation_id)
+    assert intake.status(previous.generation_id).status == 'UNKNOWN'

@@ -84,6 +84,11 @@ async function writeV2() {
     'Do not invent a new story or generate new hook/title candidates. Existing tables are in the plan. ' +
     'Writer owns prose, rhythm, transitions, imagery, grounded metaphor and CTA wording. ' +
     'Human approval of expression never overrides A/B truth. Edited words remain subject to truth critique. ' +
+    'Locked output mode is approved.selected_mode when present: REEL means spoken Vietnamese with breath and conversational rhythm; ' +
+    'SHORT_ARTICLE means short written content; LONG_ARTICLE means long written content. Never switch modes. ' +
+    'REEL is not a short article read aloud. SHORT_ARTICLE uses written-content rules, not spoken-Reel rules. ' +
+    'Clarity comes first: title/opening must be immediately understood, never deliberately obscure or clever wordplay. ' +
+    'Follow approved.knowledge_choice_policy; optional knowledge may be omitted when it adds no clarity/depth. ' +
     'If a plan conflicts with evidence, report the conflict; do not silently change angle. ' +
     'For candidate-table rubric inspect the supplied plan, not duplicate tables in the article. ' +
     'Return selected title in title field, same format; begin the article with selected hook. ' +
@@ -162,7 +167,7 @@ async function writeV2() {
     + 'If any check fails, set its boolean false and emit a blocking creative_quality or voice finding '
     + 'with affected_text and explanation. Do not downgrade an owner requirement failure to an advisory. '
     + 'If it also crosses a truth boundary, retain the appropriate hard category; quality never overrides truth.\n'
-    + 'Check approved plan fidelity semantically: exact selected hook/title, source identity, psychology/treatment, outline sequence, POV and tone. Set plan_fidelity false for material drift and emit a blocking finding in an existing appropriate category. No new Critic.\n'
+    + 'Check approved selected_mode against the actual writing, not just its format label. SHORT_ARTICLE must not become spoken Reel. Check approved plan fidelity semantically: exact selected hook/title, source identity, psychology/treatment, outline sequence, POV and tone. Set plan_fidelity false for material drift and emit a blocking finding in an existing appropriate category. No new Critic.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
   const stage = V2_BOUND.stage
