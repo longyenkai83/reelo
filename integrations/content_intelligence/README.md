@@ -111,3 +111,20 @@ mandatory. Public stream lifecycle metadata and a native --debug-file are saved 
 for diagnosis, never used as an undocumented alternate completion API. Debug logs may contain
 private material: keep outside Git and do not include raw logs in owner/architect reports.
 Timeout/default effort/budget are not raised by this patch. No recovery loop is introduced.
+
+## C5.3 — redundant terminal-output Read denial
+
+The main/model must not read task output; Python is the authoritative artifact reader.
+The host allowlist and permission review remain unchanged. A denial becomes a non-blocking
+permission_notes audit entry ONLY after a correlated completed notification, independent
+Python artifact read/structured validation, exact receipt/context/generation/parent identity,
+terminal execution status and unchanged creative assets have passed.
+
+Each denial must be Read of the exact output_file string returned by that terminal event.
+Its tool_use_id must identify one actual Read invocation in the stream after completion,
+with matching input, before the denial report. A final aggregate permission_denials list
+alone cannot prove timing. Any unexpected denial, missing/duplicate tool call, earlier Read,
+other target/tool, missing terminal, invalid artifact or identity mismatch still blocks.
+No path aliases, broader temporary-directory read grant, ignored arbitrary denials or retry.
+The original native events remain intact; permission-review.json and host.permission_notes
+record the bounded classification. Main prose/Read never authorizes completion.

@@ -229,3 +229,83 @@ def test_native_stop_never_accepts_even_existing_partial_output(packet, tmp_path
     assert code in result.validation_issues
     again = dispatch(store, packet, request_id='one', authorize_current=lambda p: None, launch=launch)
     assert again == result and calls == [1]
+
+@pytest.mark.parametrize('case', [
+    'exact', 'before', 'other_path', 'Write', 'PowerShell', 'Bash', 'mixed',
+    'malformed', 'schema', 'context_hash', 'ingestion_id', 'packet_id', 'packet_revision',
+    'packet_hash', 'receipt_context_hash', 'generation_id', 'missing_terminal',
+    'missing_call', 'duplicate_call', 'unrelated_terminal', 'not_terminal',
+])
+def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, monkeypatch, case):
+    from integrations.content_intelligence.host import HostConfig, NativeHost
+    workspace = tmp_path/'workspace'
+    template = workspace/'.claude/workflows/batch-content.js'
+    template.parent.mkdir(parents=True)
+    template.write_text('export const meta = {};\n/* V2_BOUND_CONTEXT */')
+    monkeypatch.setattr(HostConfig, 'verify', lambda self: None)
+    monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path/'home'))
+    monkeypatch.setenv('TEMP', str(tmp_path))
+    store = IntakeStore(tmp_path/'db.sqlite')
+    receipt = store.intake(packet)
+    execution, _ = store.reserve(receipt, 'c53')
+    context = store.context(receipt)
+    out = tmp_path/'claude'/'returned.json'
+    out.parent.mkdir()
+    terminal = execution.model_dump(mode='json')
+    terminal.update(status='DRAFT_READY', critic_status='PASS', artifacts=[{'content':'SYNTHETIC ONLY'}])
+    body = {'context_hash': receipt.context_hash, 'execution': terminal}
+    if case == 'context_hash': body['context_hash'] = 'bad'
+    if case in ('ingestion_id', 'packet_id', 'packet_hash'): terminal['receipt'][case] = 'bad'
+    if case == 'packet_revision': terminal['receipt']['packet_revision'] += 1
+    if case == 'receipt_context_hash': terminal['receipt']['context_hash'] = 'bad'
+    if case == 'generation_id': terminal['generation_id'] = 'other'
+    if case == 'schema': terminal['published'] = True
+    if case == 'not_terminal': terminal['status'] = 'RUNNING'
+    out.write_text('bad json' if case == 'malformed' else json.dumps({'result':body}), encoding='utf8')
+    cfg = HostConfig(executable=tmp_path/'claude.exe',execution_workspace=workspace,state_directory=tmp_path/'runs')
+    script = cfg.state_directory/execution.generation_id/'batch-content.js'
+    events = [dict(type='system',subtype='init',claude_code_version='2.1.270',cwd=str(workspace),
+                   tools=['Read','Workflow'],permissionMode='dontAsk',mcp_servers=[],plugins=[]),
+        {'type':'assistant','message':{'content':[{'type':'tool_use','name':'Workflow','id':'workflow',
+            'input':{'scriptPath':script.as_posix()}}]}},
+        dict(type='system',subtype='task_started',task_id='task',tool_use_id='workflow')]
+    notification = dict(type='system',subtype='task_notification',task_id='task',tool_use_id='workflow',
+                        status='completed',output_file=str(out))
+    name = case if case in ('Write','PowerShell','Bash') else 'Read'
+    data = {'file_path': str(out if case != 'other_path' else tmp_path/'unrelated')}
+    call = {'type':'assistant','message':{'content':[{'type':'tool_use','name':name,'id':'denied','input':data}]}}
+    denial = dict(tool_name=name,tool_use_id='denied',tool_input=data)
+    if case == 'before': events.append(call)
+    if case == 'unrelated_terminal': notification['tool_use_id']='unrelated'
+    if case != 'missing_terminal': events.append(notification)
+    if case not in ('before','missing_call'): events.append(call)
+    if case == 'duplicate_call': events.append(call)
+    denials=[denial]
+    if case == 'mixed':
+        other={'file_path':str(tmp_path/'other')}
+        events.append({'type':'assistant','message':{'content':[{'type':'tool_use','name':'Read','id':'other','input':other}]}})
+        denials.append(dict(tool_name='Read',tool_use_id='other',tool_input=other))
+    events.append(dict(type='result',subtype='success',permission_denials=denials))
+    class Process:
+        returncode=0
+        def communicate(self, timeout): return '\n'.join(json.dumps(e) for e in events), ''
+    captured=[]
+    def launch(argv, **kwargs):
+        captured.extend(argv)
+        return Process()
+    monkeypatch.setattr(subprocess,'Popen',launch)
+    if case == 'exact':
+        result=NativeHost(cfg)(execution,context)
+        assert result.status=='DRAFT_READY' and result.receipt==receipt
+        assert result.generation_id==execution.generation_id
+        assert result.human_approval=='PENDING' and result.published is False
+        assert len(result.host['permission_notes'])==1
+        assert result.host['permission_notes'][0]['code']=='redundant_post_terminal_output_read_denied'
+        assert json.loads((cfg.state_directory/execution.generation_id/'permission-review.json').read_text())==result.host['permission_notes']
+        allowed=captured[captured.index('--allowedTools')+1:captured.index('--permission-mode')]
+        assert allowed==['Workflow', 'Read('+script.as_posix()+')']
+    else:
+        with pytest.raises(ValueError): NativeHost(cfg)(execution,context)
+        assert not (cfg.state_directory/execution.generation_id/'result.json').exists()
+        assert not (cfg.state_directory/execution.generation_id/'permission-review.json').exists()
+    assert store.context(receipt)==context
