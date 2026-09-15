@@ -194,8 +194,8 @@ def test_effort_override_is_session_local_and_keeps_safety(packet, tmp_path, mon
     execution, _ = store.reserve(receipt, 'test')
     config = HostConfig(executable=tmp_path/'claude.exe', execution_workspace=workspace,
                         state_directory=tmp_path/'runs', effort_level=effort)
-    with pytest.raises(RuntimeError, match='test launch boundary'):
-        NativeHost(config)(execution, store.context(receipt))
+    result = NativeHost(config)(execution, store.context(receipt))
+    assert result.status == 'UNKNOWN'
     settings = json.loads(seen[seen.index('--settings')+1])
     assert settings.get('effortLevel') == effort
     assert settings['disableAllHooks'] is True
@@ -251,19 +251,23 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
     context = store.context(receipt)
     out = tmp_path/'claude'/'returned.json'
     out.parent.mkdir()
-    terminal = execution.model_dump(mode='json')
-    terminal.update(status='DRAFT_READY', critic_status='PASS', artifacts=[{'content':'SYNTHETIC ONLY'}])
-    body = {'context_hash': receipt.context_hash, 'execution': terminal}
-    if case == 'context_hash': body['context_hash'] = 'bad'
-    if case in ('ingestion_id', 'packet_id', 'packet_hash'): terminal['receipt'][case] = 'bad'
-    if case == 'packet_revision': terminal['receipt']['packet_revision'] += 1
-    if case == 'receipt_context_hash': terminal['receipt']['context_hash'] = 'bad'
-    if case == 'generation_id': terminal['generation_id'] = 'other'
-    if case == 'schema': terminal['published'] = True
-    if case == 'not_terminal': terminal['status'] = 'RUNNING'
+    from integrations.content_intelligence.stages import stage_identity
+    stage = stage_identity(execution, 'WRITER', {})
+    body = {'schema_version': 'reelo.host-stage.1', 'stage': dict(stage), 'output': {
+        'status': 'DRAFT', 'content': 'SYNTHETIC ONLY', 'title': 'Synthetic', 'format': 'Reel',
+        'issues': [], 'customer_evidence_ids': [packet['customer_truth']['verified_insight']['evidence_refs'][0]['evidence_id']],
+        'external_dispositions': [dict(strategy_field=r['strategy_field'], disposition='omitted', explanation='Unsupported')
+                                  for r in packet['external_evidence_requirements']]}}
+    if case in ('context_hash', 'receipt_context_hash'): body['stage']['context_hash'] = 'bad'
+    if case in ('ingestion_id', 'packet_id', 'packet_hash', 'generation_id'): body['stage'][case] = 'bad'
+    if case == 'packet_revision': body['stage']['packet_revision'] += 1
+    if case == 'schema': body['output']['published'] = True
+    if case == 'not_terminal': body['output']['status'] = 'RUNNING'
     out.write_text('bad json' if case == 'malformed' else json.dumps({'result':body}), encoding='utf8')
     cfg = HostConfig(executable=tmp_path/'claude.exe',execution_workspace=workspace,state_directory=tmp_path/'runs')
-    script = cfg.state_directory/execution.generation_id/'batch-content.js'
+    work = cfg.state_directory/execution.generation_id/'WRITER'
+    work.mkdir(parents=True)
+    script = work/'batch-content.js'
     events = [dict(type='system',subtype='init',claude_code_version='2.1.270',cwd=str(workspace),
                    tools=['Read','Workflow'],permissionMode='dontAsk',mcp_servers=[],plugins=[]),
         {'type':'assistant','message':{'content':[{'type':'tool_use','name':'Workflow','id':'workflow',
@@ -295,17 +299,15 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
         return Process()
     monkeypatch.setattr(subprocess,'Popen',launch)
     if case == 'exact':
-        result=NativeHost(cfg)(execution,context)
-        assert result.status=='DRAFT_READY' and result.receipt==receipt
-        assert result.generation_id==execution.generation_id
-        assert result.human_approval=='PENDING' and result.published is False
-        assert len(result.host['permission_notes'])==1
-        assert result.host['permission_notes'][0]['code']=='redundant_post_terminal_output_read_denied'
-        assert json.loads((cfg.state_directory/execution.generation_id/'permission-review.json').read_text())==result.host['permission_notes']
-        allowed=captured[captured.index('--allowedTools')+1:captured.index('--permission-mode')]
-        assert allowed==['Workflow', 'Read('+script.as_posix()+')']
+        result, host = NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, [])
+        assert result == body and result['stage']['ingestion_id'] == receipt.ingestion_id
+        assert len(host['permission_notes']) == 1
+        assert host['permission_notes'][0]['code'] == 'redundant_post_terminal_output_read_denied'
+        assert json.loads((work/'permission-review.json').read_text()) == host['permission_notes']
+        allowed = captured[captured.index('--allowedTools')+1:captured.index('--permission-mode')]
+        assert allowed == ['Workflow', 'Read('+script.as_posix()+')']
     else:
-        with pytest.raises(ValueError): NativeHost(cfg)(execution,context)
-        assert not (cfg.state_directory/execution.generation_id/'result.json').exists()
-        assert not (cfg.state_directory/execution.generation_id/'permission-review.json').exists()
-    assert store.context(receipt)==context
+        with pytest.raises(ValueError): NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, [])
+        assert not (work/'validated-host-result.json').exists()
+        assert not (work/'permission-review.json').exists()
+    assert store.context(receipt) == context

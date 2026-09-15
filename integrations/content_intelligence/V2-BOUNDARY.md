@@ -43,3 +43,9 @@ cannot supply it. Unknown rental/shared context remains unknown. Critic must ind
 verify relevant voice/story/knowledge sources. Any unresolved truth, intent, scope or source
 verification defect belongs in blocking_issues, not notes. Code projects PASS only with zero
 blockers; otherwise REVISE, with the raw review retained. No change to legacy or packet schema.
+
+C5.4 owner-authorized decision: deterministic local Phase 9 code now calls one native Workflow
+per stage (Writer, Critic1, optional Rewrite, Critic2), preserving this creative boundary.
+The model cannot decide stage transitions or final execution status. Persist/validate each
+terminal stage before continuing; stop UNKNOWN on malformed/stopped/mismatched output, retaining
+all verified predecessors. No retry/resume framework. C5.3 permission rules remain unchanged.

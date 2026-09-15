@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .adapter import ExecutionResult, encoded
 from .contract import value_hash
+from .stages import execute_stages, validate_envelope
 
 
 @dataclass(frozen=True)
@@ -153,12 +154,21 @@ class NativeHost:
             raise ValueError('context_hash_mismatch')
         work = config.state_directory.resolve()/execution.generation_id
         work.mkdir(parents=True, exist_ok=False)
+        assets = [{'path': p.as_posix(), 'sha256': __import__('hashlib').sha256(p.read_bytes()).hexdigest()}
+                  for p in config.read_files]
+        return execute_stages(execution, context, work, assets, self.invoke_stage)
+
+    def invoke_stage(self, execution, context, stage, inputs, work, assets):
+        config = self.config
+        config.verify()
+        if value_hash(context) != execution.receipt.context_hash or value_hash(inputs) != stage['input_hash']:
+            raise ValueError('stage_input_mismatch')
         template = (config.execution_workspace/'.claude/workflows/batch-content.js').read_text(encoding='utf-8')
         if '/* V2_BOUND_CONTEXT */' not in template:
             raise ValueError('v2_workflow_not_installed')
-        assets = [{'path': p.as_posix(), 'sha256': __import__('hashlib').sha256(p.read_bytes()).hexdigest()}
-                  for p in config.read_files]
-        binding = {'execution': execution.model_dump(mode='json'), 'context': context, 'assets': assets}
+        identity = dict(receipt=execution.receipt.model_dump(mode='json'),
+                        generation_id=execution.generation_id, parent_generation_id=execution.parent_generation_id)
+        binding = {'execution': identity, 'context': context, 'assets': assets, 'stage': stage, 'inputs': inputs}
         # Adapter embeds validated immutable data; model-supplied args never supply authority.
         script_text = template.replace('/* V2_BOUND_CONTEXT */',
             'const V2_BOUND = JSON.parse('+json.dumps(encoded(binding), ensure_ascii=False)+');')
@@ -229,34 +239,17 @@ class NativeHost:
             raise ValueError('host_nonzero_exit')
         verify_runtime_profile(events, config)
         body, correlation = correlated_result(events, script, Path(os.environ['TEMP'])/'claude')
-        if body.get('context_hash') != execution.receipt.context_hash:
-            raise ValueError('workflow_context_mismatch')
-        result = ExecutionResult.model_validate(body.get('execution'))
-        if (result.receipt != execution.receipt or result.generation_id != execution.generation_id
-                or result.parent_generation_id != execution.parent_generation_id):
-            raise ValueError('workflow_identity_mismatch')
-        if result.notion_status != 'NOT_SENT' or result.notion_page_url is not None or result.host:
-            raise ValueError('model_cannot_claim_external_handoff_or_host_provenance')
+        validate_envelope(body, stage, context)
         for asset in assets:
             if __import__('hashlib').sha256(Path(asset['path']).read_bytes()).hexdigest() != asset['sha256']:
                 raise ValueError('creative_asset_changed_during_execution')
-        if result.status not in ('DRAFT_READY', 'CRITIC_FAILED', 'BLOCKED_PENDING_RESEARCH'):
-            raise ValueError('workflow_result_not_terminal')
-        if any(not isinstance(a.get('content'), str) for a in result.artifacts):
-            raise ValueError('missing_draft_content')
         permission_notes = review_permission_denials(events, correlation)
         (work/'permission-review.json').write_text(encoded(permission_notes), encoding='utf-8')
-        # Persist separate artifacts. Host has no write permission to project/customer files.
-        for index, artifact in enumerate(result.artifacts):
-            if not isinstance(artifact.get('content'), str):
-                raise ValueError('missing_draft_content')
-            artifact['content_hash'] = value_hash(artifact['content'])
-            artifact['path'] = str(work/('draft-'+str(index)+'.md'))
-            Path(artifact['path']).write_text(artifact['content'], encoding='utf-8')
-        result.host = dict(correlation, executable=str(config.executable), version=config.version,
-                           cwd=str(config.execution_workspace), profile='read-only-controlled-cli',
-                           script_hash=value_hash(script_text), assets=assets,
-                           requested_effort_level=config.effort_level or 'inherited',
-                           permission_notes=permission_notes)
-        (work/'result.json').write_text(result.model_dump_json(indent=2), encoding='utf-8')
-        return result
+        host = dict(correlation, executable=str(config.executable), version=config.version,
+                    cwd=str(config.execution_workspace), profile='read-only-controlled-cli',
+                    script_hash=value_hash(script_text), assets=assets,
+                    requested_effort_level=config.effort_level or 'inherited',
+                    permission_notes=permission_notes,
+                    session_ids=list(dict.fromkeys(e['session_id'] for e in events if e.get('session_id'))))
+        (work/'validated-host-result.json').write_text(encoded(body), encoding='utf-8')
+        return body, host

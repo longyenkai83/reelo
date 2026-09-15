@@ -13,78 +13,47 @@ const draft = () => ({ status: 'DRAFT', content: 'SYNTHETIC draft only', title: 
 const pass = () => ({ verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
   external_claims_safe: true, creator_truth_preserved: true, context_scope_preserved: true,
   source_verification_complete: true, title_criteria: Array(8).fill(true), blocking_issues: [], notes: [] })
-async function run(queue, bound = true, inputContext = context) {
+async function run(queue, bound = true, inputContext = context, stageType = 'WRITER') {
   const prompts = []
   const env = { args: [], log: () => {}, parallel: jobs => Promise.all(jobs.map(job => job())),
     agent: async (prompt, options) => { prompts.push({prompt, options}); const next = queue.shift(); if (next instanceof Error) throw next; return next } }
-  if (bound) env.V2_BOUND = { execution: { receipt: { context_hash: 'test' }, generation_id: 'g', status: 'RUNNING', critic_status: 'NOT_RUN' }, context: structuredClone(inputContext), assets: [] }
+  if (bound) env.V2_BOUND = { execution: { receipt: { context_hash: 'test' }, generation_id: 'g', status: 'RUNNING', critic_status: 'NOT_RUN' }, context: structuredClone(inputContext), assets: [], stage: {stage_type: stageType, stage_id: 'stage', input_hash: 'test'}, inputs: {draft: draft(), critic: pass()} }
   const result = await vm.runInNewContext('(async()=>{' + script + '})()', env)
   return { result, prompts, env }
 }
 ;(async () => {
-  let r = await run([draft(), pass()])
-  assert.equal(r.result.execution.status, 'DRAFT_READY')
-  assert.equal(r.prompts[1].options.agentType, 'critic-ban-giam-khao')
-  assert.equal(JSON.stringify(r.env.V2_BOUND.context), JSON.stringify(context))
-  // Q1: a different selected treatment must survive every creative call, including rewrite.
   for (const kind of ['comparison', 'question_answer', 'story']) {
     const selected = structuredClone(context)
     selected.packet.content_strategy.angle.angle_type = kind
     selected.packet.content_strategy.angle.opening_direction.text = 'SELECTED_OPENING_' + kind
     selected.packet.content_strategy.angle.core_argument.text = 'SELECTED_ARGUMENT_' + kind
-    const failed = { ...pass(), verdict: 'REVISE', blocking_issues: ['revise expression only'] }
-    const checked = await run([draft(), failed, draft(), pass()], true, selected)
-    assert.equal(JSON.stringify(checked.env.V2_BOUND.context), JSON.stringify(selected))
-    assert.equal(checked.prompts.length, 4)
-    for (const {prompt} of checked.prompts) {
-      assert(prompt.includes('SELECTED_OPENING_' + kind))
-      assert(prompt.includes('SELECTED_ARGUMENT_' + kind))
-      assert(prompt.includes('No forced axis'))
-      assert(prompt.includes('psychology or story treatment'))
-      assert(prompt.includes('independent Critic must read'))
+    for (const stageType of ['WRITER', 'CRITIC1', 'REWRITE', 'CRITIC2']) {
+      const output = stageType.startsWith('CRITIC') ? pass() : draft()
+      const r = await run([output, new Error('must never run a second agent')], true, selected, stageType)
+      assert.equal(r.prompts.length, 1)
+      assert.equal(r.result.schema_version, 'reelo.host-stage.1')
+      assert.equal(r.result.stage.stage_type, stageType)
+      assert.equal(JSON.stringify(r.result.output), JSON.stringify(output))
+      assert.equal(JSON.stringify(r.env.V2_BOUND.context), JSON.stringify(selected))
+      const {prompt, options} = r.prompts[0]
+      for (const text of ['SELECTED_OPENING_' + kind, 'SELECTED_ARGUMENT_' + kind, 'No forced axis',
+                         'psychology or story treatment', 'independent Critic must read',
+                         'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET']) assert(prompt.includes(text))
+      if (stageType === 'WRITER') {
+        assert(prompt.includes('**Zone B selected direction; no forced axis**'))
+        assert(!prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))
+      }
+      if (stageType.startsWith('CRITIC')) {
+        assert.equal(options.agentType, 'critic-ban-giam-khao')
+        assert.equal(options.schema.properties.title_criteria.minItems, 8)
+        assert(prompt.includes('Never trust writer self-certification'))
+      }
+      assert.equal(options.schema.additionalProperties, false)
     }
-    assert(checked.prompts[0].prompt.includes('**Zone B selected direction; no forced axis**'))
-    assert(!checked.prompts[0].prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))
   }
-  for (const field of ['truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete']) {
-    let fail = pass(); fail[field] = false
-    r = await run([draft(), fail, draft(), fail])
-    assert.equal(r.result.execution.status, 'CRITIC_FAILED', field)
-    assert.equal(r.prompts.length, 4)
-    assert.equal(r.result.execution.artifacts.length, 2)
-    assert.equal(r.result.execution.artifacts[1].parent_version, 1)
-  }
-  // Notes alone do not force rewrite; reported PASS with blockers cannot bypass it.
-  r = await run([draft(), {...pass(), notes: ['Owner approval is still pending']}])
-  assert.equal(r.prompts.length, 2)
-  assert.equal(r.result.execution.status, 'DRAFT_READY')
-  for (const finding of ['external_knowledge_as_creator_history', 'customer_as_creator_experience',
-    'illustration_as_personal_history', 'rent_as_business_premises', 'unsupported_same_situation', 'fake_literal_quote']) {
-    const mixed = {...pass(), blocking_issues: [finding]}
-    r = await run([draft(), mixed, draft(), mixed])
-    assert.equal(r.result.execution.status, 'CRITIC_FAILED')
-    assert.equal(r.result.execution.artifacts[0].critic.verdict, 'REVISE')
-    assert.equal(r.result.execution.artifacts[0].critic_raw.verdict, 'PASS')
-    assert(r.result.execution.validation_issues.includes(finding))
-    assert.equal(r.prompts.length, 4)
-  }
-  for (const malformed of [{...pass(), truth_preserved: 'true'}, {...pass(), verdict: 'FAIL'},
-    {...pass(), blocking_issues: null}, {...pass(), title_criteria: Array(8).fill(1)},
-    {...pass(), issues: ['legacy finding must survive']}, {...pass(), verdict: 'REVISE'}]) {
-    r = await run([draft(), malformed, draft(), malformed])
-    assert.equal(r.result.execution.status, 'CRITIC_FAILED')
-  }
-  r = await run([draft(), null, draft(), pass()])
-  assert.equal(r.result.execution.status, 'DRAFT_READY')
-  r = await run([new Error('child died')])
-  assert.equal(r.result.execution.status, 'CRITIC_FAILED')
-  const withCounter = draft()
-  withCounter.customer_evidence_ids.push(packet.customer_truth.verified_insight.contradictions[0].counter_ref.evidence_id)
-  r = await run([withCounter, pass()])
-  assert.equal(r.result.execution.status, 'DRAFT_READY', 'validated counter evidence must reach Critic')
-  assert.equal(r.prompts.length, 2)
-  let bad = draft(); bad.customer_evidence_ids = ['invented']
-  r = await run([bad]); assert.equal(r.result.execution.status, 'CRITIC_FAILED'); assert.equal(r.prompts.length, 1)
-  r = await run([], false); assert(Array.isArray(r.result)); assert.equal(r.prompts.length, 0)
-  console.log('V2 workflow truth, bounded rewrite, failure slots, immutable context, legacy empty path PASS')
+  await assert.rejects(() => run([new Error('child died')]), /child died/)
+  await assert.rejects(() => run([], true, context, 'UNKNOWN'), /TRUSTED_STAGE_REQUIRED/)
+  const legacy = await run([], false)
+  assert(Array.isArray(legacy.result)); assert.equal(legacy.prompts.length, 0)
+  console.log('Single-stage schema/craft/Zone-B/context gates and legacy empty path PASS')
 })().catch(e => { console.error(e); process.exitCode = 1 })

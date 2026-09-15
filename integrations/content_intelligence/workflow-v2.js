@@ -58,7 +58,7 @@ async function writeV2() {
     Use only the read files provided. Do not guess private source paths. Missing required creative
     references must be reported. A synthetic fixture is not a real customer endorsement.`
   const shared = constraints + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
-    '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets)
+    '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
   const string = { type: 'string' }
   const writerSchema = {
     type: 'object', additionalProperties: false,
@@ -87,42 +87,6 @@ async function writeV2() {
     },
     required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes'],
   }
-  function validDraft(draft) {
-    if (!draft || draft.status !== 'DRAFT' || !draft.content || !draft.title) return false
-    if (!Array.isArray(draft.customer_evidence_ids) || !draft.customer_evidence_ids.length ||
-        draft.customer_evidence_ids.some(id => !refs.some(r => r.evidence_id === id))) return false
-    const expected = packet.external_evidence_requirements.map(r => r.strategy_field).sort()
-    const actual = (draft.external_dispositions || []).map(r => r.strategy_field).sort()
-    if (JSON.stringify(expected) !== JSON.stringify(actual)) return false
-    return draft.external_dispositions.every(r => ['omitted', 'softened'].includes(r.disposition) && r.explanation)
-  }
-  // Code owns terminal semantics; keep the original review beside this projection.
-  function normalizeCritic(raw) {
-    const blocking = []
-    const arrayOfText = x => Array.isArray(x) && x.every(v => typeof v === 'string' && v.trim())
-    if (!raw || typeof raw !== 'object') {
-      return { verdict: 'REVISE', blocking_issues: ['missing_critic_result'], notes: [] }
-    }
-    if (arrayOfText(raw.blocking_issues)) blocking.push(...raw.blocking_issues)
-    else blocking.push('invalid_blocking_issues')
-    // A legacy/extra issues list cannot silently disappear into informational notes.
-    if (Array.isArray(raw.issues)) blocking.push(...raw.issues)
-    if (!arrayOfText(raw.notes)) blocking.push('invalid_notes')
-    for (const key of ['truth_preserved', 'selected_intent_preserved', 'limitations_preserved',
-      'external_claims_safe', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete']) {
-      if (raw[key] !== true) blocking.push(key + '_not_confirmed')
-    }
-    if (!Array.isArray(raw.title_criteria) || raw.title_criteria.length !== 8 ||
-        !raw.title_criteria.every(v => v === true)) blocking.push('title_criteria_not_passed')
-    if (!['PASS', 'REVISE'].includes(raw.verdict)) blocking.push('invalid_critic_verdict')
-    if (Object.keys(raw).some(k => !Object.hasOwn(criticSchema.properties, k))) blocking.push('unexpected_critic_field')
-    if (raw.verdict === 'REVISE' && !blocking.length) blocking.push('revise_without_explanation')
-    return { ...raw, reported_verdict: raw.verdict, verdict: blocking.length ? 'REVISE' : 'PASS',
-      blocking_issues: [...new Set(blocking)], notes: arrayOfText(raw.notes) ? raw.notes : [] }
-  }
-  function criticPass(critic) {
-    return critic.verdict === 'PASS' && critic.blocking_issues.length === 0
-  }
   const criticize = draft => agent(shared + '\n' +
     CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
     '\nV2 override: read draft below, not a file. Independently check every customer assertion against A, '
@@ -135,54 +99,31 @@ async function writeV2() {
     + 'separate sources versus same situation, fake literal quotes, unsupported causality and market inflation.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
-  const artifacts = []
-  try {
-    let draft = await agent(WRITER_PROMPT({
+  const stage = V2_BOUND.stage
+  if (!stage || !['WRITER', 'CRITIC1', 'REWRITE', 'CRITIC2'].includes(stage.stage_type)) {
+    throw new Error('TRUSTED_STAGE_REQUIRED')
+  }
+  freeze(stage)
+  freeze(V2_BOUND.inputs)
+  let output
+  if (stage.stage_type === 'WRITER') {
+    output = await agent(WRITER_PROMPT({
       chu_de: packet.content_strategy.angle.title.text,
       nguon: 'V2 packet and explicit read-only assets below',
       ghi_chu: 'V2 structured draft; no file writes',
     }, 'Zone B selected direction; no forced axis') + '\nV2 OVERRIDE (applies to every prior legacy instruction):\n' + shared,
     { label: 'V2: writer', phase: 'Viết', schema: writerSchema })
-    if (draft) artifacts.push({ version: 1, parent_version: null, content: draft.content || '', writer: draft })
-    if (draft && draft.status === 'BLOCKED_PENDING_RESEARCH') {
-      execution.status = 'BLOCKED_PENDING_RESEARCH'
-      execution.validation_issues = draft.issues || ['external_evidence_required']
-    } else if (!validDraft(draft)) {
-      execution.status = 'CRITIC_FAILED'
-      execution.validation_issues = ['writer_output_or_provenance_invalid']
-    } else {
-      let rawCritic = await criticize(draft)
-      let critic = normalizeCritic(rawCritic)
-      artifacts[0].critic_raw = rawCritic
-      artifacts[0].critic = critic
-      if (!criticPass(critic)) {
-        const rewrite = await agent(shared + '\nRevise once using the existing Reelo writing craft. '
-          + 'Preserve A/B and fix every blocking issue. Notes are informational, not a reason to rewrite. Return a new structured version, never overwrite its parent.\n'
-          + JSON.stringify({ draft, critic }),
-        { label: 'V2: bounded rewrite', phase: 'Sửa', schema: writerSchema })
-        if (rewrite) artifacts.push({ version: 2, parent_version: 1, content: rewrite.content || '', writer: rewrite })
-        draft = rewrite
-        rawCritic = validDraft(draft) ? await criticize(draft) : null
-        critic = normalizeCritic(rawCritic)
-        if (rewrite) {
-          artifacts[artifacts.length - 1].critic_raw = rawCritic
-          artifacts[artifacts.length - 1].critic = critic
-        }
-      }
-      const pass = validDraft(draft) && criticPass(critic)
-      execution.critic_status = pass ? 'PASS' : 'FAIL'
-      execution.status = pass ? 'DRAFT_READY' : 'CRITIC_FAILED'
-      execution.validation_issues = pass ? [] : (critic.blocking_issues.length ? critic.blocking_issues : ['critic_or_rewrite_failed'])
-    }
-  } catch (error) {
-    execution.status = 'CRITIC_FAILED'
-    execution.critic_status = 'FAIL'
-    execution.validation_issues = ['creative_agent_failed']
+  } else if (stage.stage_type === 'REWRITE') {
+    output = await agent(shared + '\nRevise once using the existing Reelo writing craft. '
+      + 'Preserve A/B and fix every blocking issue. Notes are informational, not a reason to rewrite. Return a new structured version, never overwrite its parent.\n'
+      + JSON.stringify(V2_BOUND.inputs),
+    { label: 'V2: bounded rewrite', phase: 'Sửa', schema: writerSchema })
+  } else {
+    output = await criticize(V2_BOUND.inputs.draft)
   }
   if (JSON.stringify(context) !== immutable || JSON.stringify(execution.receipt) !== identity) {
     throw new Error('IMMUTABLE_CONTEXT_CHANGED')
   }
-  execution.artifacts = artifacts
-  // No null-slot filtering. Failure is an explicit result for this requested generation.
-  return { context_hash: execution.receipt.context_hash, execution }
+  // One creative agent only. Python validates, persists and chooses the next stage.
+  return { schema_version: 'reelo.host-stage.1', stage, output }
 }

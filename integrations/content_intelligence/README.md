@@ -128,3 +128,37 @@ other target/tool, missing terminal, invalid artifact or identity mismatch still
 No path aliases, broader temporary-directory read grant, ignored arbitrary denials or retry.
 The original native events remain intact; permission-review.json and host.permission_notes
 record the bounded classification. Main prose/Read never authorizes completion.
+## C5.4 — bounded stage-wise execution (owner-authorized architecture decision)
+
+Phase 9 orchestration now lives in `stages.py`: WRITER -> CRITIC1 -> optional REWRITE ->
+CRITIC2. Each host invocation executes exactly one creative agent with the existing Writer,
+Critic and rewrite craft. Native print mode no longer owns the full multi-stage chain.
+No generic orchestrator, queue or resume mechanism is introduced. Legacy workflow unchanged.
+
+Every call receives identical canonical A/B/C and execution identity, the same read-only asset
+manifest, and only its required previous draft/review. No accumulated host logs or stage history
+are placed in the creative context. The model returns stage output, not execution status.
+Python verifies terminal correlation, stage identity/input hash and strict output schema before
+C5.3 permission-denial classification. It then persists raw output, normalized output, artifact
+hashes, packet/revision/ingestion/generation lineage, parent stage and host task/session metadata.
+`completed.json` is atomically written/flushed before the next stage. Predecessor bytes/hashes
+are rechecked before each next call and before final PASS; raw Critic output remains separate.
+
+States: WRITER_COMPLETED, CRITIC1_COMPLETED, REWRITE_COMPLETED, CRITIC2_COMPLETED. A stopped,
+timed-out, malformed or mismatched stage stops the generation with UNKNOWN and a stage-specific
+*_UNKNOWN record. Verified predecessors remain authoritative in their files and final result.
+Abrupt process loss can leave RUNNING/progress files; it never grants automatic retry/resume.
+No previous UNKNOWN generation is relabeled by a new controlled acceptance.
+
+PASS still requires strict truth/intent/scope/source checks, all eight title checks and zero
+blockers. Valid reported PASS with blockers becomes REVISE; notes alone do not trigger rewrite.
+Malformed transport now stops immediately rather than launching another model to repair it.
+There is at most one rewrite. Final REVISE is CRITIC_FAILED. DRAFT_READY requires all completed
+stage identity/hash checks and final applicable Critic PASS. Approval stays PENDING, no publish.
+Notion is not invoked by this state machine.
+
+Host timeout/budget configuration now bounds EACH stage independently: existing defaults 600s
+and USD5, at most four stages (up to USD20 configured aggregate ceiling). This is a bound, not
+measured billing. The controlled C5.4 run retains the prior explicit 900s/medium/USD5 settings
+per invocation. No global settings or tool grants change; no retry after the native wait ceiling.
+Private drafts/logs remain machine-local, outside Git. Technical PASS does not accept C5.
