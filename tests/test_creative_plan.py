@@ -170,3 +170,99 @@ def test_explicit_human_attestation_required(setup):
     a,store=setup[2],setup[4];p=a['plan']
     with pytest.raises(ValueError):
         store.review(p['creative_plan_id'],dict(decision='approved',reviewer='No attestation',expected_plan_hash=p['plan_hash']))
+
+# C5.9 findings semantics: deterministic enforcement of source-reviewed findings.
+from integrations.content_intelligence.creative_plan import candidate_eligibility, review_readiness
+
+
+@pytest.mark.parametrize('field', ['limitations', 'advisories', 'publication_requirements'])
+def test_visible_non_blocking_findings_allow_human_gate(setup, field):
+    _, context, approved, assets, store = setup
+    raw = deepcopy(approved['plan']['proposal'])
+    raw[field] = ['Visible unresolved finding']
+    plan = store.save(raw, context, assets, 'SYNTHETIC-C5.9')
+    assert not plan['blockers']
+    assert not plan['review_view']['ready_to_write']
+    review = store.review(plan['creative_plan_id'], dict(decision='approved', reviewer='SYNTHETIC TEST reviewer',
+        human_attested=True, approval_kind='synthetic_fixture', expected_plan_hash=plan['plan_hash']))
+    assert store.approved(review['approval_id'], context, assets)
+    ready = review_readiness(raw, context, human_approved=True)
+    assert ready['ready_to_write'] and not ready['ready_to_publish']
+    assert ready['publication_blocked_by_requirements']
+    assert ready[field]  # Findings remain visible, including packet publication requirements.
+
+
+@pytest.mark.parametrize('field', ['issues', 'blocking_issues', 'outline_blocking_issues'])
+def test_unresolved_truth_and_legacy_findings_remain_blocking(setup, field):
+    _, context, approved, assets, store = setup
+    raw = deepcopy(approved['plan']['proposal']); raw[field] = ['Unsupported creator/customer inference']
+    plan = store.save(raw, context, assets, 'SYNTHETIC-C5.9')
+    with pytest.raises(ValueError, match='blocked_plan'):
+        store.review(plan['creative_plan_id'], dict(decision='approved', reviewer='Tester',
+            human_attested=True, expected_plan_hash=plan['plan_hash']))
+
+
+@pytest.mark.parametrize('group,key', [('hook_candidates','hook_id'), ('title_candidates','title_id')])
+def test_unsafe_alternative_not_whole_plan_blocked_and_cannot_select(setup, group, key):
+    _, context, approved, assets, store = setup
+    raw = deepcopy(approved['plan']['proposal'])
+    bad = raw[group][1]
+    # Model booleans all true; an independent finding must still block selection.
+    bad['blocking_reasons'] = ['Unsupported causal/creator inference after source review']
+    bad['semantic_review'] = 'Source does not support this assertion'
+    assert candidate_eligibility(bad)['state'] == 'blocked'
+    assert candidate_eligibility(raw[group][0])['state'] == 'selectable'
+    plan = store.save(raw, context, assets, 'SYNTHETIC-C5.9')
+    assert not plan['blockers']
+    decision = dict(decision='approved', reviewer='Tester', human_attested=True, expected_plan_hash=plan['plan_hash'])
+    with pytest.raises(ValueError, match='blocked_candidate'):
+        store.review(plan['creative_plan_id'], dict(**decision, **{key: bad['candidate_id']}))
+    # Editing a known-blocked option cannot bypass the eligibility check.
+    with pytest.raises(ValueError, match='blocked_candidate'):
+        store.review(plan['creative_plan_id'], dict(**decision, **{key: bad['candidate_id'],
+            'edited_hook' if key == 'hook_id' else 'edited_title': 'Replacement'}))
+    assert store.review(plan['creative_plan_id'], decision)['decision'] == 'approved'
+
+
+def test_none_story_and_packet_requirements_not_erased(setup):
+    _, context, approved, _, _ = setup
+    before = deepcopy(context)
+    raw = deepcopy(approved['plan']['proposal'])
+    raw['publication_requirements'] = []
+    view = review_readiness(raw, context)
+    assert view['story_types'] == ['NONE'] and view['ready_for_owner_review']
+    assert view['publication_requirements'] and not view['ready_to_publish']
+    assert context == before
+
+
+@pytest.mark.parametrize('kind,supported,same,blocked', [
+    ('DIRECT', False, True, True), ('DIRECT', True, True, False),
+    ('ADJACENT', False, True, True), ('ADJACENT', False, False, False)])
+def test_story_semantic_contract(setup, tmp_path, kind, supported, same, blocked):
+    _, context, approved, assets, _ = setup
+    raw = deepcopy(approved['plan']['proposal'])
+    story = tmp_path/'creator-experience/story.md'; story.parent.mkdir()
+    story.write_text('SYNTHETIC creator experienced event X.', encoding='utf8')
+    digest = hashlib.sha256(story.read_bytes()).hexdigest()
+    assets = assets + [dict(path=story.as_posix(), sha256=digest)]
+    raw['story_matches'] = [dict(source_ref=story.as_posix(), sha256=digest,
+        section='Synthetic event', origin='creator_story', why_relevant='Supported event X; not event Y',
+        allowed_use='Only the source-supported event X, no customer situation Y', match_type=kind,
+        support_quote='SYNTHETIC creator experienced event X.',
+        same_situation_supported=supported, use_as_same_situation=same)]
+    valid = validate_proposal(raw, context, assets)
+    assert bool(plan_blockers(valid)) is blocked
+    raw['story_matches'][0]['support_quote'] = 'Invented creator event Y'
+    with pytest.raises(ValueError, match='story_support_not_in_source'):
+        validate_proposal(raw, context, assets)
+
+
+def test_approved_snapshot_cannot_mutate_stored_plan(setup):
+    _, context, approved, assets, store = setup
+    approved['plan']['proposal']['limitations'].append('In-memory tamper')
+    with pytest.raises(ValueError, match='integrity'):
+        # Direct database tampering is detected by the bound plan hash.
+        with store.connect() as db:
+            db.execute('UPDATE plans SET body=? WHERE plan_id=?',
+                (json.dumps(approved['plan']), approved['creative_plan_id']))
+        store.approved(approved['approval_id'], context, assets)

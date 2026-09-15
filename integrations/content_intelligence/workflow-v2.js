@@ -87,7 +87,7 @@ async function writeV2() {
     'If a plan conflicts with evidence, report the conflict; do not silently change angle. ' +
     'For candidate-table rubric inspect the supplied plan, not duplicate tables in the article. ' +
     'Return selected title in title field, same format; begin the article with selected hook. ' +
-    'When illustrative material is used, retain its visible disclosure. Synthetic fixture approval is not owner approval.'
+    'Keep limitations, advisories and unresolved publication_requirements visible. Never hide/contradict a limitation. ADJACENT Story cannot become the same customer experience; NONE does not need a story. When illustrative material is used, retain its visible disclosure. Synthetic fixture approval is not owner approval.'
   const string = { type: 'string' }
   const writerSchema = {
     type: 'object', additionalProperties: false,
@@ -179,17 +179,17 @@ async function writeV2() {
       'Choose HOW TO EXPRESS: real creator story first when relevant, then creator observation/lesson, then sourced knowledge; ' +
       'clearly disclosed hypothetical illustration only when needed. Missing matching story: explain omission, never fabricate. ' +
       'Use exact allowed source_ref paths and SHA256, sections, why_relevant and allowed_use. Respect supplied asset roles: ' +
-      'external knowledge cannot become creator story, customer evidence cannot become creator history. ' +
+      'external knowledge cannot become creator story, customer evidence cannot become creator history. Story match_type is DIRECT only for supported same creator experience, ADJACENT for a distinct illuminating experience. Provide exact support_quote locally from that source, same_situation_supported and use_as_same_situation. ADJACENT must have precise allowed_use and must never imply the same customer experience. No story_matches means NONE; use illustrations with origin illustrative_ai and explicit disclosure for ILLUSTRATIVE_AI. ' +
       'Use mechanism names from the provided nguyen-ly-tam-ly library, choose communication mechanism not hidden customer motive. ' +
       'Use existing format, treatment, hook and title libraries. Defaults: at least 8 hook candidates and 3-5 titles, ' +
       'shortlist/recommend one of each; these are craft defaults, not permanent product constants. ' +
       'Candidates refer to existing evidence IDs where factual content applies; proposed expression is not customer truth. ' +
       'For EVERY candidate independently review intent_preserved, factual_claims_supported and natural_and_meaningful. ' +
-      'False checks or issues block the plan; do not certify nonsense, unsupported identity, causality or fake claims. ' +
+      'Separate blocking_issues, limitations, advisories and publication_requirements; leave legacy issues empty. Unknown identity/context, synthetic fixtures, preserved contradictions and no direct Story are visible limitations, not automatic drafting blockers. Unresolved required_before_publish requirements prohibit publication, not safe plan approval/drafting. Never clear packet requirements. Partial index/optional craft reads are advisories unless an integrity defect exists. Hidden/contradicted limitations ARE blockers. For each candidate give semantic_review and blocking_reasons; false checks also block that candidate. Recommend only safe candidates. Safe alternatives remain selectable; unsupported recommended wording or unsafe outline blocks the plan. Do not certify nonsense, unsupported identity, causality or fake claims. ' +
       'Produce concise reader-centered outline with source placement and return to reader, inviting tone and useful CTA direction. ' +
       'No forced axis; do not replace B opening or argument. Retain unknown author count/context and contradictions. ' +
       'Truth types remain unchanged; origins are provenance labels. Use packet/insight/angle IDs exactly. ' +
-      'Do not include private source passages verbatim in plan; metadata and concise permitted use only.\n' +
+      'Except the local support_quote evidence field, use metadata and concise permitted use, not private passages. Redact support_quote in shared reports.\n' +
       JSON.stringify(V2_BOUND.inputs.asset_roles),
       {label: 'V2: creative planner', phase: 'Viết', schema: V2_BOUND.inputs.plan_schema})
   } else if (stage.stage_type === 'WRITER') {

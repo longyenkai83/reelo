@@ -26,6 +26,10 @@ class SourceMatch(Model):
     origin: Literal['creator_story', 'creator_observation', 'external_knowledge']
     why_relevant: str
     allowed_use: str
+    match_type: Literal['DIRECT', 'ADJACENT'] | None = None
+    support_quote: str = ''  # Local source evidence; never export private passages.
+    same_situation_supported: bool = False
+    use_as_same_situation: bool = False
 
 
 class Candidate(Model):
@@ -36,6 +40,8 @@ class Candidate(Model):
     intent_preserved: bool
     factual_claims_supported: bool
     natural_and_meaningful: bool
+    blocking_reasons: list[str] = Field(default_factory=list)
+    semantic_review: str = ''
 
 
 class Psychology(Model):
@@ -73,7 +79,12 @@ class PlanProposal(Model):
     selected_intent_preserved: bool
     reader_centered_pov: bool
     non_prescriptive_tone: bool
-    issues: list[str]
+    issues: list[str] = Field(default_factory=list)  # Historical, unclassified: fail closed.
+    blocking_issues: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    advisories: list[str] = Field(default_factory=list)
+    publication_requirements: list[str] = Field(default_factory=list)
+    outline_blocking_issues: list[str] = Field(default_factory=list)
 
 
 class Review(Model):
@@ -115,6 +126,9 @@ def validate_proposal(raw, context, assets):
                 raise ValueError('plan_source_origin_invalid')
             if not all(m[k].strip() for k in ('section', 'why_relevant', 'allowed_use')):
                 raise ValueError('plan_source_use_missing')
+            if role == 'creator' and m['support_quote']:
+                if m['support_quote'] not in Path(path).read_text(encoding='utf8'):
+                    raise ValueError('story_support_not_in_source')
     lib = Path(p['psychology']['library_source']).as_posix()
     if lib not in allow or 'nguyen-ly-tam-ly' not in lib:
         raise ValueError('approved_psychology_library_required')
@@ -138,12 +152,49 @@ def validate_proposal(raw, context, assets):
     return p
 
 
+def candidate_eligibility(c):
+    reasons = list(c.get('blocking_reasons', []))
+    reasons += [k for k in ('intent_preserved', 'factual_claims_supported', 'natural_and_meaningful') if not c[k]]
+    return dict(state='blocked' if reasons else 'selectable', reasons=reasons)
+
+
 def plan_blockers(p):
-    failures = list(p['issues'])
+    failures = list(p.get('issues', [])) + list(p.get('blocking_issues', [])) + list(p.get('outline_blocking_issues', []))
     failures += [k for k in ('truth_preserved', 'selected_intent_preserved', 'reader_centered_pov', 'non_prescriptive_tone') if not p[k]]
-    for c in p['hook_candidates'] + p['title_candidates']:
-        failures += [c['candidate_id']+':'+k for k in ('intent_preserved', 'factual_claims_supported', 'natural_and_meaningful') if not c[k]]
+    for m in p['story_matches']:
+        if not m.get('match_type') or not m.get('support_quote', '').strip():
+            failures.append('story_classification_and_source_support_required')
+        if m.get('match_type') == 'DIRECT' and not m.get('same_situation_supported'):
+            failures.append('direct_story_experience_not_supported')
+        if m.get('match_type') == 'ADJACENT' and m.get('use_as_same_situation'):
+            failures.append('adjacent_story_cannot_be_same_experience')
+    for group, recommendation in [('hook_candidates', 'recommended_hook_id'), ('title_candidates', 'recommended_title_id')]:
+        safe = [c['candidate_id'] for c in p[group] if candidate_eligibility(c)['state'] == 'selectable']
+        if not safe:
+            failures.append(group+':no_safe_alternative')
+        if p[recommendation] not in safe:
+            failures.append(recommendation+':blocked_recommendation')
     return failures
+
+
+def review_readiness(p, context, *, human_approved=False):
+    """Conservative review projection, never a publication authorization.
+
+    Packet requirements cannot be cleared by model omission/softening or plan approval.
+    Semantic judgments require source review; deterministic checks do not prove meaning.
+    """
+    requirements = list(p.get('publication_requirements', []))
+    requirements += [json.dumps(r, ensure_ascii=False, sort_keys=True)
+                     for r in context['packet'].get('external_evidence_requirements', [])]
+    blockers = plan_blockers(p)
+    return dict(blocking_issues=blockers, limitations=p.get('limitations', []),
+                advisories=p.get('advisories', []), publication_requirements=requirements,
+                ready_for_owner_review=not blockers, ready_to_write=human_approved and not blockers,
+                ready_to_publish=False, publication_blocked_by_requirements=bool(requirements),
+                story_types=[m.get('match_type') for m in p['story_matches']] or
+                            (['ILLUSTRATIVE_AI'] if p['illustrations'] else ['NONE']),
+                candidates={group: [dict(**c, eligibility=candidate_eligibility(c)) for c in p[group]]
+                            for group in ('hook_candidates', 'title_candidates')})
 
 
 class PlanStore:
@@ -168,7 +219,8 @@ class PlanStore:
             rev = db.execute('SELECT COALESCE(MAX(revision),0)+1 FROM plans WHERE packet_id=?', (proposal['packet_id'],)).fetchone()[0]
             plan = dict(creative_plan_id='CP-'+uuid4().hex, plan_revision=rev, context_hash=value_hash(context),
                         proposal=proposal, assets=assets, generation_id=generation_id,
-                        created_at=datetime.now(timezone.utc).isoformat(), blockers=plan_blockers(proposal))
+                        created_at=datetime.now(timezone.utc).isoformat(), blockers=plan_blockers(proposal),
+                        review_view=review_readiness(proposal, context))
             plan['plan_hash'] = value_hash(plan)
             db.execute('INSERT INTO plans VALUES(?,?,?,?)', (plan['creative_plan_id'], proposal['packet_id'], rev, json.dumps(plan)))
         return plan
@@ -185,13 +237,16 @@ class PlanStore:
         review = Review.model_validate(raw).model_dump()
         plan = self.get(plan_id); p = plan['proposal']
         if review['expected_plan_hash'] != plan['plan_hash']: raise ValueError('stale_plan_review')
-        if review['decision'] == 'approved' and plan['blockers']: raise ValueError('blocked_plan_cannot_be_approved')
+        if review['decision'] == 'approved' and (plan['blockers'] or plan_blockers(p)):
+            raise ValueError('blocked_plan_cannot_be_approved')
         if review['approval_kind'] == 'synthetic_fixture' and not review['reviewer'].startswith('SYNTHETIC TEST'):
             raise ValueError('synthetic_reviewer_label_required')
         def choose(group, key, default, edited):
             cid = review[key] or p[default]
             found = next((c for c in p[group] if c['candidate_id'] == cid), None)
             if not found: raise ValueError('unknown_candidate_id')
+            if review['decision'] == 'approved' and candidate_eligibility(found)['state'] == 'blocked':
+                raise ValueError('blocked_candidate_cannot_be_selected')
             text = review[edited] if review[edited] is not None else found['text']
             if not text.strip(): raise ValueError('empty_creative_selection')
             return dict(candidate_id=cid, text=text)
@@ -228,6 +283,8 @@ class PlanStore:
             if hashlib.sha256(Path(asset['path']).read_bytes()).hexdigest() != asset['sha256']:
                 raise ValueError('approved_source_changed')
         validate_proposal(plan['proposal'], context, assets)
+        if plan_blockers(plan['proposal']):
+            raise ValueError('blocked_plan_cannot_be_executed')
         if a['approval_kind'] == 'synthetic_fixture' and 'synthetic_fixture' not in context['packet']['project']['source_route_context']:
             raise ValueError('synthetic_approval_requires_synthetic_packet')
         return a

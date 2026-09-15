@@ -258,3 +258,37 @@ hook, outline, psychology, treatment and sources, while retaining prose/voice cr
 Critic checks plan fidelity and existing truth/quality gates; no second Critic added.
 Missing/false plan-fidelity confirmation blocks; selected title/format mismatch also blocks
 in code. Other semantic judgments are fallible model review, not regex truth proof.
+
+
+## C5.9 ? findings semantics and owner review
+
+Canonical C5.8 names the integrated Planner implementation whose local source report
+was named REPORT-C5.6.md. C5.9 does not redesign it.
+
+Internal plans separate blocking_issues, limitations, advisories and publication_requirements.
+Historical issues remain fail-closed until explicitly reviewed into a NEW derived projection.
+Outline truth drift is blocking (outline_blocking_issues); hiding/contradicting a limitation
+is a truth defect, not an advisory. Packet external requirements are copied into review_view
+by code, cannot be cleared by model omission, and never become publication permission.
+ready_for_owner_review is distinct from ready_to_write (requires actual current human approval).
+ready_to_publish remains false: this internal plan API cannot authorize publication, including
+when all plan blockers are zero. No new publisher or research workflow has been introduced.
+
+Each candidate has computed eligibility (selectable/blocked with reasons). Semantic source
+review may add blocking_reasons even when all model booleans are true. Blocked alternatives
+do not block a safe recommendation; blocked recommendations/no safe alternatives block the plan.
+The human review endpoint rejects selection of a blocked candidate, including text-edit bypass.
+A rejected/deferred decision remains possible. Human edits to otherwise safe options remain
+explicit, immutable and subject to the existing downstream truth Critic; they are not machine
+proof of truth. No model approval or automatic human decision is permitted.
+
+Story match_type DIRECT requires source-supported same experience; ADJACENT requires precise
+allowed_use and cannot use_as_same_situation. Exact local support_quote must exist in the source.
+No story match is valid (NONE); an illustrative_ai scene is ILLUSTRATIVE_AI with required disclosure.
+Support span/hash checks prove source wording/origin, not semantic entailment: the Planner,
+source-reviewing operator and downstream Critic must assess meaning. No pronoun/keyword regex
+can prove identity, causality or relevance. Shared reports redact private support passages.
+
+Writer/Critic receive the same approved snapshot including every limitation, advisory and
+publication requirement. C5.9 itself runs only offline validation and tests: no Planner rerun,
+Writer, Critic, rewrite, Notion or publication. Owner reviews ONE gate artifact before any drafting.
