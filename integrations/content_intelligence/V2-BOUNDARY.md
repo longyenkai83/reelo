@@ -61,3 +61,12 @@ C5.6 owner quality requirements apply to V2 Writer, rewrite and Critic: reader-c
 and an inviting non-prescriptive tone. No pronoun counting; no forced emotion or poetic wordplay.
 Three explicit semantic quality booleans must pass in addition to existing truth/title gates.
 Do not reuse/paraphrase the owner-rejected C5.5 title. Existing truth hard categories stay intact.
+
+
+Owner-approved Option B (implementation prompt also named C5.6, after C5.7 review):
+CREATIVE_PLAN -> explicit non-model HUMAN_PLAN_APPROVAL -> existing Writer/Critic path.
+WHAT TO SAY remains upstream; internal plan is PROPOSED HOW TO EXPRESS only. Origin
+labels (creator story / external knowledge / illustrative AI) do not replace truth types.
+No Writer without a current approved plan. New revision/material edits never silently
+inherit approval; edited selections are explicit review decisions. Final content approval
+remains separate and PENDING. No Unified Web, source routing, library refactor or merge.

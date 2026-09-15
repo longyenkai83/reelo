@@ -142,10 +142,11 @@ def review_permission_denials(events, verified_terminal):
 
 
 class NativeHost:
-    def __init__(self, config: HostConfig):
+    def __init__(self, config: HostConfig, *, approval_id=None):
         # Fail operator configuration errors before dispatch reserves a generation.
         config.verify()
         self.config = config
+        self.approval_id = approval_id
 
     def __call__(self, execution: ExecutionResult, context: dict):
         config = self.config
@@ -156,7 +157,15 @@ class NativeHost:
         work.mkdir(parents=True, exist_ok=False)
         assets = [{'path': p.as_posix(), 'sha256': __import__('hashlib').sha256(p.read_bytes()).hexdigest()}
                   for p in config.read_files]
-        return execute_stages(execution, context, work, assets, self.invoke_stage)
+        from .creative_plan import PlanStore
+        from .planning import execute_plan
+        plans = PlanStore(config.state_directory.parent/'creative-plans.sqlite')
+        if self.approval_id is None:
+            return execute_plan(execution, context, work, assets, self.invoke_stage, plans)
+        approved = plans.approved(self.approval_id, context, assets)
+        return execute_stages(execution, context, work, assets, self.invoke_stage,
+                              approved_plan=approved,
+                              recheck_approval=lambda: plans.approved(self.approval_id, context, assets))
 
     def invoke_stage(self, execution, context, stage, inputs, work, assets):
         config = self.config

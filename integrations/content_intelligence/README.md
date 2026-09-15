@@ -213,3 +213,48 @@ fail closed. Critic must describe failures as blocking creative_quality/voice fi
 violations retain their existing hard category. Raw review, one Critic, maximum one rewrite,
 host lifecycle, permission, Q1, packet/provenance and all C5.5 hard categories are unchanged.
 Semantic detection remains fallible; technical PASS is not owner quality acceptance.
+
+
+## Integrated Creative Planner — one explicit human gate (owner scope after C5.7)
+
+Sending a packet without `--approval-id` now runs only CREATIVE_PLAN and returns
+PLAN_PENDING_APPROVAL (or PLAN_BLOCKED/UNKNOWN). It never writes an article.
+The internal PROPOSED plan does not modify the Phase8 packet or select another angle.
+Story/Knowledge matches use the explicit read-only manifest; unmatched necessary assets
+must be reported. Candidate counts use existing craft defaults, not fixed product constants.
+
+Minimal operator surface in the Insight CLI (same current input-ledger flags as before):
+
+```text
+python -m tiktok_insight_miner send-content-packet packet.json [current input flags] --reelo-config config.json --request-id plan-1
+python -m tiktok_insight_miner review-reelo-plan --reelo-config config.json --plan-id CP-... > plan-review.json
+python -m tiktok_insight_miner review-reelo-plan --reelo-config config.json --plan-id CP-... --review-file human-decision.json
+python -m tiktok_insight_miner send-content-packet packet.json [current input flags] --reelo-config config.json --request-id write-1 --parent-generation-id GEN-... --approval-id CPA-...
+```
+
+The operator sees the angle reference, source matches, psychology, format/treatment,
+hook/title candidates, recommended choices and outline in one local JSON artifact.
+Submit ONE decision, not separate approvals for each field:
+
+```json
+{"decision":"approved","reviewer":"actual operator name","human_attested":true,
+ "expected_plan_hash":"hash from inspected plan","hook_id":"candidate ID",
+ "title_id":"candidate ID","edited_hook":null,"edited_title":null,"edited_outline":null}
+```
+
+`rejected`/`deferred` also supported. Omitted choice fields select the recommendations.
+Edits are persisted in the approved artifact; they remain subject to truth/semantic Critic.
+A later review supersedes earlier approval; a new plan revision or changed manifest/source
+invalidates stale approval. Re-read current upstream ledgers at Writer dispatch as before.
+Approval is local operator attestation, not authenticated multiuser authorization; hashes
+bind versions, not identity. Do not let model output invoke the review API.
+
+Synthetic technical tests must label reviewer `SYNTHETIC TEST ...` and set
+`approval_kind: synthetic_fixture`; consumer only accepts that kind for synthetic packets.
+This never changes final `human_approval=PENDING`, Notion state or publication state.
+
+Writer/Critic/Rewrite receive the identical approved plan. Writer executes selected title,
+hook, outline, psychology, treatment and sources, while retaining prose/voice craft.
+Critic checks plan fidelity and existing truth/quality gates; no second Critic added.
+Missing/false plan-fidelity confirmation blocks; selected title/format mismatch also blocks
+in code. Other semantic judgments are fallible model review, not regex truth proof.

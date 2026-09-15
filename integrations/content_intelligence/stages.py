@@ -58,6 +58,7 @@ class CriticOutput(StageModel):
     title_meaning_clear: bool
     reader_centered_pov: bool
     non_prescriptive_tone: bool
+    plan_fidelity: bool | None = None
     findings: list[CriticFinding]
     verdict: Literal['PASS', 'REVISE']
     truth_preserved: bool
@@ -80,6 +81,9 @@ CHECKS = ('truth_preserved', 'selected_intent_preserved', 'limitations_preserved
 
 
 def validate_output(stage_type, raw, context):
+    if stage_type == 'CREATIVE_PLAN':
+        from .creative_plan import PlanProposal
+        return PlanProposal.model_validate(raw).model_dump()
     if stage_type in ('WRITER', 'REWRITE'):
         draft = WriterOutput.model_validate(raw).model_dump()
         if draft['status'] == 'DRAFT':
@@ -149,7 +153,10 @@ def persist(path, body):
     temp.replace(path)
 
 
-def execute_stages(execution, context, work, assets, invoke):
+def execute_stages(execution, context, work, assets, invoke, *, approved_plan, recheck_approval):
+    if not approved_plan or approved_plan['decision'] != 'approved':
+        raise ValueError('human_creative_approval_required')
+    original_plan = encoded(approved_plan)
     original_context = encoded(context)
     records = []
     execution.host = dict(profile='phase9-stage-wise', stages=records, assets=assets)
@@ -160,7 +167,8 @@ def execute_stages(execution, context, work, assets, invoke):
                     or value_hash(saved['normalized']) != saved['normalized_hash']):
                 raise ValueError('persisted_stage_integrity_failure')
 
-    stage_type, inputs = 'WRITER', {}
+    execution.host['approved_creative_plan'] = approved_plan
+    stage_type, inputs = 'WRITER', {'approved_plan': approved_plan}
     while True:  # Only the explicit transitions below; at most four calls.
         stage = stage_identity(execution, stage_type, inputs, records[-1] if records else None)
         record = dict(stage, status=stage_type+'_RUNNING')
@@ -171,6 +179,8 @@ def execute_stages(execution, context, work, assets, invoke):
         try:
             # Reload every predecessor before dispatch. Durable bytes, not model history.
             verify_completed()
+            if encoded(recheck_approval()) != original_plan:
+                raise ValueError('approval_not_current')
             for asset in assets:
                 import hashlib
                 if hashlib.sha256(Path(asset['path']).read_bytes()).hexdigest() != asset['sha256']:
@@ -178,6 +188,18 @@ def execute_stages(execution, context, work, assets, invoke):
             body, host = invoke(execution.model_copy(deep=True), json.loads(original_context),
                                 stage, json.loads(encoded(inputs)), stage_dir, assets)
             normalized = validate_envelope(body, stage, context)
+            if encoded(recheck_approval()) != original_plan:
+                raise ValueError('approval_not_current')
+            if stage_type.startswith('CRITIC'):
+                if normalized.get('plan_fidelity') is not True:
+                    normalized['blocking_issues'].append('approved_plan_fidelity_not_confirmed')
+                    normalized['verdict'] = 'REVISE'
+                if inputs['draft']['title'] != approved_plan['selected_title']['text']:
+                    normalized['blocking_issues'].append('selected_title_changed')
+                    normalized['verdict'] = 'REVISE'
+                if inputs['draft']['format'] != approved_plan['plan']['proposal']['format']:
+                    normalized['blocking_issues'].append('selected_format_changed')
+                    normalized['verdict'] = 'REVISE'
             if encoded(context) != original_context:
                 raise ValueError('stage_context_mismatch')
             for asset in assets:
@@ -202,7 +224,7 @@ def execute_stages(execution, context, work, assets, invoke):
                     execution.status = 'BLOCKED_PENDING_RESEARCH' if normalized['status'] == 'BLOCKED_PENDING_RESEARCH' else 'HOST_FAILED'
                     execution.validation_issues = normalized['issues'] or ['writer_reported_failure']
                     break
-                inputs = {'draft': normalized}
+                inputs = {'draft': normalized, 'approved_plan': approved_plan}
                 stage_type = 'CRITIC1' if stage_type == 'WRITER' else 'CRITIC2'
             else:
                 execution.artifacts[-1].update(critic_raw=record['raw'], critic=normalized)
@@ -215,7 +237,7 @@ def execute_stages(execution, context, work, assets, invoke):
                     execution.status = 'CRITIC_FAILED'
                     execution.validation_issues = normalized['blocking_issues']
                     break
-                inputs = {'draft': execution.artifacts[-1]['writer'], 'critic': normalized}
+                inputs = {'draft': execution.artifacts[-1]['writer'], 'critic': normalized, 'approved_plan': approved_plan}
                 stage_type = 'REWRITE'
             persist(work/'progress.json', execution.model_dump(mode='json'))
         except Exception as exc:

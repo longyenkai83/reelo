@@ -23,16 +23,18 @@ def draft(packet):
 
 
 def critic(revise=False):
-    return dict(title_meaning_clear=True, reader_centered_pov=True, non_prescriptive_tone=True, findings=[], verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
+    return dict(plan_fidelity=True, title_meaning_clear=True, reader_centered_pov=True, non_prescriptive_tone=True, findings=[], verdict='REVISE' if revise else 'PASS', **dict.fromkeys(CHECKS, True),
                 title_criteria=[True]*8, blocking_issues=['Fix scope'] if revise else [], notes=['Owner review pending'])
 
 
 def run(packet, tmp_path, monkeypatch, queue, change=None):
     monkeypatch.setattr(HostConfig, 'verify', lambda self: None)
     store = IntakeStore(tmp_path/'store.db')
+    from tests.creative_fixture import approved_fixture
+    approved, assets, plans = approved_fixture(packet, tmp_path)
     config = HostConfig(executable=tmp_path/'claude.exe', execution_workspace=tmp_path,
-                        state_directory=tmp_path/'stages')
-    host = NativeHost(config)
+                        state_directory=tmp_path/'stages', read_files=tuple(Path(a['path']) for a in assets))
+    host = NativeHost(config, approval_id=approved['approval_id'])
     calls = []
     def invoke(execution, context, stage, inputs, work, assets):
         # A completed predecessor must already be durable before the next launch.

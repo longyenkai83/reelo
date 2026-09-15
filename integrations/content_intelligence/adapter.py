@@ -34,7 +34,8 @@ class ExecutionResult(StrictModel):
     generation_id: str
     parent_generation_id: str | None
     status: Literal['RECEIVED', 'RUNNING', 'DRAFT_READY', 'CRITIC_FAILED',
-                    'BLOCKED_PENDING_RESEARCH', 'HOST_FAILED', 'UNKNOWN', 'SUPERSEDED']
+                    'BLOCKED_PENDING_RESEARCH', 'HOST_FAILED', 'UNKNOWN', 'SUPERSEDED',
+                    'PLAN_PENDING_APPROVAL', 'PLAN_BLOCKED']
     critic_status: Literal['NOT_RUN', 'PASS', 'FAIL'] = 'NOT_RUN'
     human_approval: Literal['PENDING'] = 'PENDING'
     notion_status: Literal['NOT_SENT', 'DRAFT'] = 'NOT_SENT'

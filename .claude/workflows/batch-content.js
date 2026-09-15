@@ -208,8 +208,19 @@ async function writeV2() {
     Keep natural Vietnamese and psychological resonance; do not add emotion just for intensity.
     All truth guards still apply: reader-centered address is not permission to invent reader facts,
     and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
-  const shared = constraints + '\n' + ownerQuality + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
+  let shared = constraints + '\n' + ownerQuality + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
+  const approved = V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
+  if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +
+    '\nExecute this plan, do not re-plan. Selected hook/title are exact approved wording; use them unchanged. ' +
+    'Keep selected psychology, treatment, format, Story/Knowledge sources and outline sequence. ' +
+    'Do not invent a new story or generate new hook/title candidates. Existing tables are in the plan. ' +
+    'Writer owns prose, rhythm, transitions, imagery, grounded metaphor and CTA wording. ' +
+    'Human approval of expression never overrides A/B truth. Edited words remain subject to truth critique. ' +
+    'If a plan conflicts with evidence, report the conflict; do not silently change angle. ' +
+    'For candidate-table rubric inspect the supplied plan, not duplicate tables in the article. ' +
+    'Return selected title in title field, same format; begin the article with selected hook. ' +
+    'When illustrative material is used, retain its visible disclosure. Synthetic fixture approval is not owner approval.'
   const string = { type: 'string' }
   const writerSchema = {
     type: 'object', additionalProperties: false,
@@ -228,7 +239,7 @@ async function writeV2() {
   const criticSchema = {
     type: 'object', additionalProperties: false,
     properties: {
-      title_meaning_clear: { type: 'boolean' }, reader_centered_pov: { type: 'boolean' },
+      plan_fidelity: { type: 'boolean' }, title_meaning_clear: { type: 'boolean' }, reader_centered_pov: { type: 'boolean' },
       non_prescriptive_tone: { type: 'boolean' },
       verdict: { type: 'string', enum: ['PASS', 'REVISE'] },
       findings: { type: 'array', items: {
@@ -250,7 +261,7 @@ async function writeV2() {
       title_criteria: { type: 'array', minItems: 8, maxItems: 8, items: { type: 'boolean' } },
       blocking_issues: { type: 'array', items: string }, notes: { type: 'array', items: string },
     },
-    required: ['title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
+    required: ['plan_fidelity', 'title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
   const criticize = draft => agent(shared + '\n' +
     CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
@@ -284,22 +295,42 @@ async function writeV2() {
     + 'If any check fails, set its boolean false and emit a blocking creative_quality or voice finding '
     + 'with affected_text and explanation. Do not downgrade an owner requirement failure to an advisory. '
     + 'If it also crosses a truth boundary, retain the appropriate hard category; quality never overrides truth.\n'
+    + 'Check approved plan fidelity semantically: exact selected hook/title, source identity, psychology/treatment, outline sequence, POV and tone. Set plan_fidelity false for material drift and emit a blocking finding in an existing appropriate category. No new Critic.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
   const stage = V2_BOUND.stage
-  if (!stage || !['WRITER', 'CRITIC1', 'REWRITE', 'CRITIC2'].includes(stage.stage_type)) {
+  if (!stage || !['CREATIVE_PLAN', 'WRITER', 'CRITIC1', 'REWRITE', 'CRITIC2'].includes(stage.stage_type)) {
     throw new Error('TRUSTED_STAGE_REQUIRED')
   }
   freeze(stage)
   freeze(V2_BOUND.inputs)
+  if (stage.stage_type !== 'CREATIVE_PLAN' && (!approved || approved.decision !== 'approved')) throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
   let output
-  if (stage.stage_type === 'WRITER') {
-    output = await agent(WRITER_PROMPT({
-      chu_de: packet.content_strategy.angle.title.text,
-      nguon: 'V2 packet and explicit read-only assets below',
-      ghi_chu: 'V2 structured draft; no file writes',
-    }, 'Zone B selected direction; no forced axis') + '\nV2 OVERRIDE (applies to every prior legacy instruction):\n' + shared,
-    { label: 'V2: writer', phase: 'Viết', schema: writerSchema })
+  if (stage.stage_type === 'CREATIVE_PLAN') {
+    output = await agent(shared + '\nCreate a PROPOSED internal Reelo creative plan only. No article, approval or writes. ' +
+      'WHAT TO SAY is locked in A/B: do not select another insight, angle, pain/gain, identity, priority or meaning of belief shift. ' +
+      'Choose HOW TO EXPRESS: real creator story first when relevant, then creator observation/lesson, then sourced knowledge; ' +
+      'clearly disclosed hypothetical illustration only when needed. Missing matching story: explain omission, never fabricate. ' +
+      'Use exact allowed source_ref paths and SHA256, sections, why_relevant and allowed_use. Respect supplied asset roles: ' +
+      'external knowledge cannot become creator story, customer evidence cannot become creator history. ' +
+      'Use mechanism names from the provided nguyen-ly-tam-ly library, choose communication mechanism not hidden customer motive. ' +
+      'Use existing format, treatment, hook and title libraries. Defaults: at least 8 hook candidates and 3-5 titles, ' +
+      'shortlist/recommend one of each; these are craft defaults, not permanent product constants. ' +
+      'Candidates refer to existing evidence IDs where factual content applies; proposed expression is not customer truth. ' +
+      'For EVERY candidate independently review intent_preserved, factual_claims_supported and natural_and_meaningful. ' +
+      'False checks or issues block the plan; do not certify nonsense, unsupported identity, causality or fake claims. ' +
+      'Produce concise reader-centered outline with source placement and return to reader, inviting tone and useful CTA direction. ' +
+      'No forced axis; do not replace B opening or argument. Retain unknown author count/context and contradictions. ' +
+      'Truth types remain unchanged; origins are provenance labels. Use packet/insight/angle IDs exactly. ' +
+      'Do not include private source passages verbatim in plan; metadata and concise permitted use only.\n' +
+      JSON.stringify(V2_BOUND.inputs.asset_roles),
+      {label: 'V2: creative planner', phase: 'Viết', schema: V2_BOUND.inputs.plan_schema})
+  } else if (stage.stage_type === 'WRITER') {
+    if (!approved || approved.decision !== 'approved') throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
+    output = await agent(shared + '\nYou are Reelo Writer. Execute the approved concise outline using relevant format/voice/Story/Knowledge references. ' +
+      'Do not rerun legacy research, candidate generation or human gates. Return article plus brief source-role audit metadata. ' +
+      'Read existing writing, voice and quality rules; retain craft without overriding approved choices.',
+      { label: 'V2: writer', phase: 'Viết', schema: writerSchema })
   } else if (stage.stage_type === 'REWRITE') {
     output = await agent(shared + '\nRevise once using the existing Reelo writing craft. '
       + 'Preserve A/B and fix every blocking issue. Notes are informational, not a reason to rewrite. Return a new structured version, never overwrite its parent.\n'

@@ -17,7 +17,7 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
   const prompts = []
   const env = { args: [], log: () => {}, parallel: jobs => Promise.all(jobs.map(job => job())),
     agent: async (prompt, options) => { prompts.push({prompt, options}); const next = queue.shift(); if (next instanceof Error) throw next; return next } }
-  if (bound) env.V2_BOUND = { execution: { receipt: { context_hash: 'test' }, generation_id: 'g', status: 'RUNNING', critic_status: 'NOT_RUN' }, context: structuredClone(inputContext), assets: [], stage: {stage_type: stageType, stage_id: 'stage', input_hash: 'test'}, inputs: {draft: draft(), critic: pass()} }
+  if (bound) env.V2_BOUND = { execution: { receipt: { context_hash: 'test' }, generation_id: 'g', status: 'RUNNING', critic_status: 'NOT_RUN' }, context: structuredClone(inputContext), assets: [], stage: {stage_type: stageType, stage_id: 'stage', input_hash: 'test'}, inputs: {approved_plan: {decision: 'approved', selected_hook: {text:'SYNTHETIC hook'}, selected_title:{text:'Synthetic title'}, approved_outline:['Synthetic outline']}, draft: draft(), critic: pass()} }
   const result = await vm.runInNewContext('(async()=>{' + script + '})()', env)
   return { result, prompts, env }
 }
@@ -40,7 +40,7 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
                          'psychology or story treatment', 'independent Critic must read',
                          'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET', 'OWNER-CONFIRMED V2 QUALITY', 'personal-story-first', 'Do not reuse it or merely', 'Keep the reader', 'Invite reflection']) assert(prompt.includes(text))
       if (stageType === 'WRITER') {
-        assert(prompt.includes('**Zone B selected direction; no forced axis**'))
+        assert(prompt.includes('HUMAN-APPROVED INTERNAL CREATIVE PLAN'))
         assert(!prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))
       }
       if (stageType.startsWith('CRITIC')) {
@@ -57,6 +57,10 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
   }
   await assert.rejects(() => run([new Error('child died')]), /child died/)
   await assert.rejects(() => run([], true, context, 'UNKNOWN'), /TRUSTED_STAGE_REQUIRED/)
+  const planner = await run([{status:'PROPOSED'}], true, context, 'CREATIVE_PLAN')
+  assert(planner.prompts[0].prompt.includes('WHAT TO SAY is locked'))
+  assert(planner.prompts[0].prompt.includes('external knowledge cannot become creator story'))
+  assert(planner.prompts[0].prompt.includes('No article, approval or writes'))
   const legacy = await run([], false)
   assert(Array.isArray(legacy.result)); assert.equal(legacy.prompts.length, 0)
   console.log('Single-stage schema/craft/Zone-B/context gates and legacy empty path PASS')
