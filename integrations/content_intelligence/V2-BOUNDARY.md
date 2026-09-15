@@ -36,3 +36,10 @@ ACK, exit 0 và lời mô hình không chứng minh hoàn tất. Mất kết qu�
 
 Nguồn kiến trúc: Phase 9 blueprint; shared map r6, D13–D17; Insight docs/v2/00–15.
 Unified Web Business OS là đích về sau; Phase 9 chỉ thêm application service, CLI/UI adapters.
+
+C5.2 clarification: external knowledge is not creator experience. First-person learning,
+meetings, actions or history need creator-specific evidence; customer speech/illustrations
+cannot supply it. Unknown rental/shared context remains unknown. Critic must independently
+verify relevant voice/story/knowledge sources. Any unresolved truth, intent, scope or source
+verification defect belongs in blocking_issues, not notes. Code projects PASS only with zero
+blockers; otherwise REVISE, with the raw review retained. No change to legacy or packet schema.

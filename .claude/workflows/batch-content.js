@@ -152,6 +152,14 @@ async function writeV2() {
   const insight = packet.customer_truth.verified_insight
   const refs = [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)]
   const constraints = `V2 takes precedence over conflicting legacy source/psychology/profile rules.
+    Creator truth is a separate boundary: external knowledge attributed to an author is not
+    evidence that the creator learned it, lived it or met that author. Never turn "Brian Tracy
+    says X" into "I learned X from Brian Tracy" without explicit creator evidence. Customer
+    evidence is not creator experience; illustrations are not factual personal history.
+    Preserve context scope: "rent" alone does not establish business premises, and distinct
+    evidence items do not establish the same situation. Retain unknown context. Translate
+    quotes only as explicitly labeled translations/paraphrases, never fake literal wording.
+    Creative examples remain clearly hypothetical, not customer causality or market proof.
     A is the only customer truth. B is selected PROPOSED intent, never confirmed demand.
     Do not mine a profile, campaign, Story, RAW or WIKI for new audience facts, jobs/pains/gains,
     demographics, motives, priority or purchase/market validation. Unknown remains unknown.
@@ -202,13 +210,15 @@ async function writeV2() {
   const criticSchema = {
     type: 'object', additionalProperties: false,
     properties: {
-      verdict: { type: 'string', enum: ['PASS', 'FAIL'] },
+      verdict: { type: 'string', enum: ['PASS', 'REVISE'] },
       truth_preserved: { type: 'boolean' }, selected_intent_preserved: { type: 'boolean' },
       limitations_preserved: { type: 'boolean' }, external_claims_safe: { type: 'boolean' },
+      creator_truth_preserved: { type: 'boolean' }, context_scope_preserved: { type: 'boolean' },
+      source_verification_complete: { type: 'boolean' },
       title_criteria: { type: 'array', minItems: 8, maxItems: 8, items: { type: 'boolean' } },
-      issues: { type: 'array', items: string },
+      blocking_issues: { type: 'array', items: string }, notes: { type: 'array', items: string },
     },
-    required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'issues'],
+    required: ['verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes'],
   }
   function validDraft(draft) {
     if (!draft || draft.status !== 'DRAFT' || !draft.content || !draft.title) return false
@@ -219,16 +229,43 @@ async function writeV2() {
     if (JSON.stringify(expected) !== JSON.stringify(actual)) return false
     return draft.external_dispositions.every(r => ['omitted', 'softened'].includes(r.disposition) && r.explanation)
   }
+  // Code owns terminal semantics; keep the original review beside this projection.
+  function normalizeCritic(raw) {
+    const blocking = []
+    const arrayOfText = x => Array.isArray(x) && x.every(v => typeof v === 'string' && v.trim())
+    if (!raw || typeof raw !== 'object') {
+      return { verdict: 'REVISE', blocking_issues: ['missing_critic_result'], notes: [] }
+    }
+    if (arrayOfText(raw.blocking_issues)) blocking.push(...raw.blocking_issues)
+    else blocking.push('invalid_blocking_issues')
+    // A legacy/extra issues list cannot silently disappear into informational notes.
+    if (Array.isArray(raw.issues)) blocking.push(...raw.issues)
+    if (!arrayOfText(raw.notes)) blocking.push('invalid_notes')
+    for (const key of ['truth_preserved', 'selected_intent_preserved', 'limitations_preserved',
+      'external_claims_safe', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete']) {
+      if (raw[key] !== true) blocking.push(key + '_not_confirmed')
+    }
+    if (!Array.isArray(raw.title_criteria) || raw.title_criteria.length !== 8 ||
+        !raw.title_criteria.every(v => v === true)) blocking.push('title_criteria_not_passed')
+    if (!['PASS', 'REVISE'].includes(raw.verdict)) blocking.push('invalid_critic_verdict')
+    if (Object.keys(raw).some(k => !Object.hasOwn(criticSchema.properties, k))) blocking.push('unexpected_critic_field')
+    if (raw.verdict === 'REVISE' && !blocking.length) blocking.push('revise_without_explanation')
+    return { ...raw, reported_verdict: raw.verdict, verdict: blocking.length ? 'REVISE' : 'PASS',
+      blocking_issues: [...new Set(blocking)], notes: arrayOfText(raw.notes) ? raw.notes : [] }
+  }
   function criticPass(critic) {
-    return critic && critic.verdict === 'PASS' && critic.truth_preserved &&
-      critic.selected_intent_preserved && critic.limitations_preserved && critic.external_claims_safe &&
-      Array.isArray(critic.title_criteria) && critic.title_criteria.length === 8 &&
-      critic.title_criteria.every(Boolean) && Array.isArray(critic.issues) && critic.issues.length === 0
+    return critic.verdict === 'PASS' && critic.blocking_issues.length === 0
   }
   const criticize = draft => agent(shared + '\n' +
     CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
     '\nV2 override: read draft below, not a file. Independently check every customer assertion against A, '
-    + 'selected intent against B, eight title criteria, and every external disposition. Never trust writer self-certification.\n'
+    + 'selected intent against B, eight title criteria, and every external disposition. Never trust writer self-certification. '
+    + 'V2 terminal semantics override legacy verdict: PASS means zero blocking_issues, REVISE means blockers remain. '
+    + 'Put every truth/intent/scope/creator attribution/voice/story verification failure in blocking_issues, never notes. '
+    + 'notes are informational only, not unresolved defects. Independently read the relevant voice, story and knowledge '
+    + 'sources before confirming source_verification_complete. Check external knowledge versus first-person history, '
+    + 'customer versus creator experience, illustrative versus real history, rent versus business premises, '
+    + 'separate sources versus same situation, fake literal quotes, unsupported causality and market inflation.\n'
     + JSON.stringify(draft),
     { agentType: 'critic-ban-giam-khao', label: 'V2: independent critic', phase: 'Chấm', schema: criticSchema })
   const artifacts = []
@@ -247,22 +284,28 @@ async function writeV2() {
       execution.status = 'CRITIC_FAILED'
       execution.validation_issues = ['writer_output_or_provenance_invalid']
     } else {
-      let critic = await criticize(draft)
-      artifacts[0].critic = critic || { verdict: 'FAIL', issues: ['missing_critic_result'] }
+      let rawCritic = await criticize(draft)
+      let critic = normalizeCritic(rawCritic)
+      artifacts[0].critic_raw = rawCritic
+      artifacts[0].critic = critic
       if (!criticPass(critic)) {
         const rewrite = await agent(shared + '\nRevise once using the existing Reelo writing craft. '
-          + 'Preserve A/B and fix these critic issues. Return a new structured version, never overwrite its parent.\n'
+          + 'Preserve A/B and fix every blocking issue. Notes are informational, not a reason to rewrite. Return a new structured version, never overwrite its parent.\n'
           + JSON.stringify({ draft, critic }),
         { label: 'V2: bounded rewrite', phase: 'Sửa', schema: writerSchema })
         if (rewrite) artifacts.push({ version: 2, parent_version: 1, content: rewrite.content || '', writer: rewrite })
         draft = rewrite
-        critic = validDraft(draft) ? await criticize(draft) : null
-        if (rewrite) artifacts[artifacts.length - 1].critic = critic || { verdict: 'FAIL', issues: ['invalid_rewrite'] }
+        rawCritic = validDraft(draft) ? await criticize(draft) : null
+        critic = normalizeCritic(rawCritic)
+        if (rewrite) {
+          artifacts[artifacts.length - 1].critic_raw = rawCritic
+          artifacts[artifacts.length - 1].critic = critic
+        }
       }
       const pass = validDraft(draft) && criticPass(critic)
       execution.critic_status = pass ? 'PASS' : 'FAIL'
       execution.status = pass ? 'DRAFT_READY' : 'CRITIC_FAILED'
-      execution.validation_issues = pass ? [] : ((critic && critic.issues) || ['critic_or_rewrite_failed'])
+      execution.validation_issues = pass ? [] : (critic.blocking_issues.length ? critic.blocking_issues : ['critic_or_rewrite_failed'])
     }
   } catch (error) {
     execution.status = 'CRITIC_FAILED'

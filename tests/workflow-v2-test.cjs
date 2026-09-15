@@ -11,7 +11,8 @@ const draft = () => ({ status: 'DRAFT', content: 'SYNTHETIC draft only', title: 
   customer_evidence_ids: [packet.customer_truth.verified_insight.evidence_refs[0].evidence_id],
   external_dispositions: packet.external_evidence_requirements.map(r => ({ strategy_field: r.strategy_field, disposition: 'omitted', explanation: 'Not supported' })) })
 const pass = () => ({ verdict: 'PASS', truth_preserved: true, selected_intent_preserved: true, limitations_preserved: true,
-  external_claims_safe: true, title_criteria: Array(8).fill(true), issues: [] })
+  external_claims_safe: true, creator_truth_preserved: true, context_scope_preserved: true,
+  source_verification_complete: true, title_criteria: Array(8).fill(true), blocking_issues: [], notes: [] })
 async function run(queue, bound = true, inputContext = context) {
   const prompts = []
   const env = { args: [], log: () => {}, parallel: jobs => Promise.all(jobs.map(job => job())),
@@ -31,7 +32,7 @@ async function run(queue, bound = true, inputContext = context) {
     selected.packet.content_strategy.angle.angle_type = kind
     selected.packet.content_strategy.angle.opening_direction.text = 'SELECTED_OPENING_' + kind
     selected.packet.content_strategy.angle.core_argument.text = 'SELECTED_ARGUMENT_' + kind
-    const failed = { ...pass(), verdict: 'FAIL', issues: ['revise expression only'] }
+    const failed = { ...pass(), verdict: 'REVISE', blocking_issues: ['revise expression only'] }
     const checked = await run([draft(), failed, draft(), pass()], true, selected)
     assert.equal(JSON.stringify(checked.env.V2_BOUND.context), JSON.stringify(selected))
     assert.equal(checked.prompts.length, 4)
@@ -45,13 +46,33 @@ async function run(queue, bound = true, inputContext = context) {
     assert(checked.prompts[0].prompt.includes('**Zone B selected direction; no forced axis**'))
     assert(!checked.prompts[0].prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))
   }
-  for (const field of ['truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe']) {
+  for (const field of ['truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete']) {
     let fail = pass(); fail[field] = false
     r = await run([draft(), fail, draft(), fail])
     assert.equal(r.result.execution.status, 'CRITIC_FAILED', field)
     assert.equal(r.prompts.length, 4)
     assert.equal(r.result.execution.artifacts.length, 2)
     assert.equal(r.result.execution.artifacts[1].parent_version, 1)
+  }
+  // Notes alone do not force rewrite; reported PASS with blockers cannot bypass it.
+  r = await run([draft(), {...pass(), notes: ['Owner approval is still pending']}])
+  assert.equal(r.prompts.length, 2)
+  assert.equal(r.result.execution.status, 'DRAFT_READY')
+  for (const finding of ['external_knowledge_as_creator_history', 'customer_as_creator_experience',
+    'illustration_as_personal_history', 'rent_as_business_premises', 'unsupported_same_situation', 'fake_literal_quote']) {
+    const mixed = {...pass(), blocking_issues: [finding]}
+    r = await run([draft(), mixed, draft(), mixed])
+    assert.equal(r.result.execution.status, 'CRITIC_FAILED')
+    assert.equal(r.result.execution.artifacts[0].critic.verdict, 'REVISE')
+    assert.equal(r.result.execution.artifacts[0].critic_raw.verdict, 'PASS')
+    assert(r.result.execution.validation_issues.includes(finding))
+    assert.equal(r.prompts.length, 4)
+  }
+  for (const malformed of [{...pass(), truth_preserved: 'true'}, {...pass(), verdict: 'FAIL'},
+    {...pass(), blocking_issues: null}, {...pass(), title_criteria: Array(8).fill(1)},
+    {...pass(), issues: ['legacy finding must survive']}, {...pass(), verdict: 'REVISE'}]) {
+    r = await run([draft(), malformed, draft(), malformed])
+    assert.equal(r.result.execution.status, 'CRITIC_FAILED')
   }
   r = await run([draft(), null, draft(), pass()])
   assert.equal(r.result.execution.status, 'DRAFT_READY')

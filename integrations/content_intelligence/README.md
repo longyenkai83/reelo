@@ -87,3 +87,27 @@ The draft evidence-ID gate includes both verified_insight.evidence_refs and its 
 contradictions[].counter_ref. Counter-evidence must survive into the independent Critic;
 unknown IDs and invented counter quotes still fail. This changes no source span/hash or
 customer truth. The C5.1 live medium-effort draft exposed this false rejection before Critic.
+
+## C5.2 — bounded lifecycle and Critic semantics
+
+V2 Critic transport uses PASS / REVISE, blocking_issues and notes. Code retains the raw
+review and computes a terminal verdict: PASS requires zero blockers, strict true checks,
+eight true title criteria and a well-formed review. A reported PASS with findings becomes
+REVISE without losing them. Informational notes alone do not trigger a rewrite. Legacy
+issues, malformed fields or missing confirmation fail closed; at most one rewrite remains.
+The existing execution critic_status PASS/FAIL/NOT_RUN and Phase 8 packet schema are unchanged.
+
+Creator truth, context/scope and independent source verification have explicit V2 checks.
+External knowledge does not establish first-person learning/experience; customer speech and
+illustrations do not become creator history. Rent does not establish business premises,
+and distinct source comments do not establish a shared situation. Translations must be
+identified rather than passed off as exact quotes. These are fallible semantic checks,
+not regex-based proof or permission to invent facts for better prose.
+
+A correlated native stopped notification returns workflow_stopped_completion_unknown;
+UNKNOWN reservation and no-retry behavior are retained even if a partial output file exists
+or the main CLI says success. Completed task + valid structured correlated result remains
+mandatory. Public stream lifecycle metadata and a native --debug-file are saved locally
+for diagnosis, never used as an undocumented alternate completion API. Debug logs may contain
+private material: keep outside Git and do not include raw logs in owner/architect reports.
+Timeout/default effort/budget are not raised by this patch. No recovery loop is introduced.

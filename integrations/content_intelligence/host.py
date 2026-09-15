@@ -69,6 +69,8 @@ def correlated_result(events, script: Path, output_root: Path):
         key = (event.get('task_id'), event.get('tool_use_id'))
         if key not in starts or key[1] not in tool_ids:
             continue
+        if event.get('status') == 'stopped':
+            raise ValueError('workflow_stopped_completion_unknown')
         if event.get('status') != 'completed' or not event.get('output_file'):
             raise ValueError('workflow_failed')
         path = Path(event['output_file']).resolve()
@@ -135,6 +137,7 @@ class NativeHost:
                 local = json.loads(path.read_text(encoding='utf-8-sig'))
                 settings['enabledPlugins'].update({k: False for k in local.get('enabledPlugins', {})})
         argv = [str(config.executable), '-p', '--output-format', 'stream-json', '--verbose',
+                '--debug-file', str(work/'native-debug.log'),
                 '--no-session-persistence', '--setting-sources', 'user,project,local',
                 '--settings', json.dumps(settings), '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
                 '--tools', 'Workflow,Read', '--allowedTools', 'Workflow',
@@ -174,6 +177,12 @@ class NativeHost:
                 events.append(json.loads(line))
             except ValueError:
                 continue
+        # Public stream diagnostics only; not an alternative completion contract.
+        lifecycle = [{k: e[k] for k in ('type', 'subtype', 'task_id', 'tool_use_id', 'status',
+                     'output_file', 'terminal_reason', 'is_error', 'total_cost_usd') if k in e}
+                     for e in events if e.get('subtype') in ('task_started', 'task_notification')
+                     or e.get('type') == 'result']
+        (work/'lifecycle.json').write_text(encoded(lifecycle), encoding='utf-8')
         if child.returncode != 0:
             raise ValueError('host_nonzero_exit')
         verify_runtime_profile(events, config)

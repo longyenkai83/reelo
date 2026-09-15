@@ -205,3 +205,27 @@ def test_effort_override_is_session_local_and_keeps_safety(packet, tmp_path, mon
     assert seen[seen.index('--mcp-config')+1] == '{"mcpServers":{}}'
     assert settings_file.read_bytes() == before
     assert store.context(receipt)['packet'] == packet
+
+@pytest.mark.parametrize('status,code', [('stopped', 'workflow_stopped_completion_unknown'), ('failed', 'workflow_failed')])
+def test_native_stop_never_accepts_even_existing_partial_output(packet, tmp_path, status, code):
+    script = tmp_path/'script.js'
+    output = tmp_path/'partial.json'
+    output.write_text('{"result":{"status":"DRAFT_READY"}}')
+    events = [
+        {'type':'assistant', 'message':{'content':[{'type':'tool_use','name':'Workflow','id':'t',
+          'input':{'scriptPath':script.as_posix()}}]}},
+        {'type':'system','subtype':'task_started','task_id':'w','tool_use_id':'t'},
+        {'type':'system','subtype':'task_notification','task_id':'w','tool_use_id':'t',
+         'status':status,'output_file':str(output)},
+        {'type':'result','subtype':'success','is_error':False},
+    ]
+    store = IntakeStore(tmp_path/'state.db')
+    calls = []
+    def launch(*args):
+        calls.append(1)
+        return correlated_result(events, script, tmp_path)
+    result = dispatch(store, packet, request_id='one', authorize_current=lambda p: None, launch=launch)
+    assert result.status == 'UNKNOWN'
+    assert code in result.validation_issues
+    again = dispatch(store, packet, request_id='one', authorize_current=lambda p: None, launch=launch)
+    assert again == result and calls == [1]
