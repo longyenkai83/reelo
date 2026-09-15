@@ -58,3 +58,23 @@ It substitutes creative responses in an isolated copy only; production has no sy
 Unsigned content hashes protect integrity, not producer authentication. The consumer is called
 by the trusted local producer service, which supplies current-ledger authorization. Exposing
 this API to untrusted remote callers would require a reviewed authentication design.
+
+
+C5.1 bounded quality patch (owner-authorized scope, not a new phase): V2 no longer
+passes the first legacy TRUC_POOL entry as a preferred axis. Zone B determines the
+selected direction; editorial history, psychology craft and story treatment must not
+replace it. Unspecified presentation remains a compatible Zone C creative choice.
+Legacy pool allocation and prompts are unchanged outside the V2 override.
+
+For a controlled quality run, supply concrete read-only knowledge documents, not just
+a WIKI index. Choose the relevant format/craft/voice/Story assets explicitly. V2 reads
+needed sections without recursively restarting legacy source discovery; missing evidence
+still blocks unsupported claims. Each independent Critic verifies its own sources.
+The draft review header records asset paths/sections/roles and omissions without dumping
+private passages. This is a prompt-level operational bound, not a hard read-count quota
+or a guarantee of semantic correctness. Do not lower truth checks to meet a timeout.
+
+Quality results and private drafts remain local; refer to the C5.1 owner review report.
+No acceptance follows from offline tests alone. UNKNOWN remains UNKNOWN and must not be
+blindly relaunched; a separately identified synthetic controlled test is not a recovery
+or completion of the earlier execution. No merge, Source Router or Unified Web work.
