@@ -25,6 +25,40 @@ def test_cannot_replace_upstream_identity(setup,field):
     with pytest.raises(ValueError,match='identity'):validate_proposal(raw,c,assets)
 
 
+def test_old_approval_cannot_authorize_corrected_packet(setup):
+    _, context, approval, assets, store = setup
+    changed = deepcopy(context)
+    changed['packet']['packet_id'] = 'CORRECTED-PACKET'
+    changed['packet']['content_strategy']['angle']['angle_id'] = 'CORRECTED-ANGLE'
+    with pytest.raises(ValueError, match='approval_plan_or_assets_changed'):
+        store.approved(approval['approval_id'], changed, assets)
+
+
+def test_outline_expansion_cannot_bypass_reader_value(setup):
+    _, _, a, _, store = setup
+    with pytest.raises(ValueError, match='new_reader_value_plan'):
+        store.review(a['creative_plan_id'], dict(decision='EDIT_AND_APPROVE', reviewer='SYNTHETIC TEST',
+            human_attested=True, expected_plan_hash=a['plan']['plan_hash'], edited_outline=['one', 'two']))
+
+
+@pytest.mark.parametrize('value', [[], [' '], ['one','extra']])
+def test_reader_value_required_per_outline_section(setup, value):
+    _, context, approval, assets, _ = setup
+    raw = deepcopy(approval['plan']['proposal']); raw['reader_value'] = value
+    with pytest.raises(ValueError): validate_proposal(raw, context, assets)
+
+
+def test_story_none_and_missing_story_payoff(setup):
+    raw = deepcopy(setup[2]['plan']['proposal'])
+    assert not plan_blockers(raw)  # Story NONE is valid.
+    raw['story_matches'] = [dict(source_ref='source', section='story', match_type='ADJACENT',
+                                 support_quote='synthetic support', use_as_same_situation=False)]
+    assert 'story_job_and_payoff_required' in plan_blockers(raw)
+    for field in ('reader_value_clear', 'narrative_payoff_clear'):
+        bad = deepcopy(setup[2]['plan']['proposal']); bad[field] = False
+        assert field in plan_blockers(bad)
+
+
 def test_no_customer_truth_field_allowed(setup):
     _,c,a,assets,_=setup
     raw=deepcopy(a['plan']['proposal']);raw['new_customer_pain']='invented'
@@ -250,6 +284,9 @@ def test_story_semantic_contract(setup, tmp_path, kind, supported, same, blocked
         allowed_use='Only the source-supported event X, no customer situation Y', match_type=kind,
         support_quote='SYNTHETIC creator experienced event X.',
         same_situation_supported=supported, use_as_same_situation=same)]
+    raw['narrative_payoffs'] = [dict(source_ref=story.as_posix(), section='Synthetic event',
+        story_job='Concrete understanding', setup='SYNTHETIC setup', tension_or_turn='SYNTHETIC turn',
+        meaning='SYNTHETIC meaning', reader_payoff='SYNTHETIC distinction')]
     valid = validate_proposal(raw, context, assets)
     assert bool(plan_blockers(valid)) is blocked
     raw['story_matches'][0]['support_quote'] = 'Invented creator event Y'

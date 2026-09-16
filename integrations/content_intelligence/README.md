@@ -327,3 +327,18 @@ UNKNOWN without reconciliation blocks. A matching record must pass every evidenc
 check again at reservation. RUNNING/RECEIVED never unlock. No auto-retry, terminal overwrite,
 new intake database or Planner rerun. Existing Writer/Critic/max-one-rewrite orchestration,
 host permissions, truth guards and legacy behavior remain unchanged.
+
+## C5.15 ? reader value and narrative payoff
+
+New internal PlanProposal requires reader_value aligned one-to-one with outline,
+narrative_payoffs for selected Story source/section, reader_value_clear and
+narrative_payoff_clear. Empty/missing section values fail validation. A used Story
+without one explicit job/setup/turn/meaning/reader payoff blocks plan approval. NONE
+uses an empty payoff list and may pass. Semantic booleans false block; these checks
+do not prove usefulness/entailment or fabricate a source realization. Owner review
+is still required. No private creator-specific rule is encoded in core.
+
+Historical plan bodies/approvals remain stored unchanged; they are not automatically
+upgraded to satisfy the expanded internal quality contract. A corrected upstream
+packet has a different context/angle and cannot reuse their approval. Portable
+Phase8 schema, truth categories, stage lifecycle and permissions are unchanged.

@@ -57,6 +57,16 @@ class Illustration(Model):
     disclosure: str
 
 
+class NarrativePayoff(Model):
+    source_ref: str
+    section: str
+    story_job: str
+    setup: str
+    tension_or_turn: str
+    meaning: str
+    reader_payoff: str
+
+
 class PlanProposal(Model):
     packet_id: str
     verified_insight_id: str
@@ -73,6 +83,10 @@ class PlanProposal(Model):
     recommended_hook_id: str
     recommended_title_id: str
     outline: list[str] = Field(min_length=1)
+    reader_value: list[str] = Field(min_length=1)
+    narrative_payoffs: list[NarrativePayoff]
+    reader_value_clear: bool
+    narrative_payoff_clear: bool
     cta_direction: str
     creative_constraints: list[str]
     truth_preserved: bool
@@ -151,6 +165,8 @@ def validate_proposal(raw, context, assets):
         raise ValueError('incomplete_creative_plan')
     if any(not i['disclosure'].strip() for i in p['illustrations']):
         raise ValueError('illustration_disclosure_required')
+    if len(p['reader_value']) != len(p['outline']) or any(not v.strip() for v in p['reader_value']):
+        raise ValueError('reader_value_required_for_every_section')
     return p
 
 
@@ -163,6 +179,16 @@ def candidate_eligibility(c):
 def plan_blockers(p):
     failures = list(p.get('issues', [])) + list(p.get('blocking_issues', [])) + list(p.get('outline_blocking_issues', []))
     failures += [k for k in ('truth_preserved', 'selected_intent_preserved', 'reader_centered_pov', 'non_prescriptive_tone') if not p[k]]
+    failures += [k for k in ('reader_value_clear', 'narrative_payoff_clear') if not p.get(k)]
+    payoffs = p.get('narrative_payoffs', [])
+    for m in p['story_matches']:
+        found = [x for x in payoffs if (x['source_ref'], x['section']) == (m['source_ref'], m['section'])]
+        if len(found) != 1 or any(not found[0][k].strip() for k in
+                ('story_job', 'setup', 'tension_or_turn', 'meaning', 'reader_payoff')):
+            failures.append('story_job_and_payoff_required')
+    if any(not any((x['source_ref'], x['section']) == (m['source_ref'], m['section'])
+                   for m in p['story_matches']) for x in payoffs):
+        failures.append('payoff_requires_selected_story')
     for m in p['story_matches']:
         if not m.get('match_type') or not m.get('support_quote', '').strip():
             failures.append('story_classification_and_source_support_required')
@@ -257,6 +283,8 @@ class PlanStore:
             return dict(candidate_id=cid, text=text)
         outline = review['edited_outline'] if review['edited_outline'] is not None else p['outline']
         if not outline or not all(s.strip() for s in outline): raise ValueError('empty_approved_outline')
+        if review['decision'] == 'approved' and len(outline) != len(p.get('reader_value', [])):
+            raise ValueError('outline_edit_requires_new_reader_value_plan')
         result = dict(approval_id='CPA-'+uuid4().hex, plan=plan, **review,
                       owner_decision=owner_decision,
                       limitations=p.get('limitations', []),

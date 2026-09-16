@@ -17,6 +17,8 @@ def proposal(packet, library):
         hook_candidates=[candidate('h1','SYNTHETIC draft'),candidate('h2','SYNTHETIC alternative')],
         title_candidates=[candidate('t1','Synthetic'),candidate('t2','Synthetic alternative')],
         recommended_hook_id='h1', recommended_title_id='t1', outline=['SYNTHETIC outline'],
+        reader_value=['SYNTHETIC useful distinction'], narrative_payoffs=[],
+        reader_value_clear=True, narrative_payoff_clear=True,
         cta_direction='No sale',creative_constraints=['No new customer truth'],truth_preserved=True,
         selected_intent_preserved=True,reader_centered_pov=True,non_prescriptive_tone=True,issues=[])
 
