@@ -1,5 +1,10 @@
 # V2 Content Intelligence consumer
 
+RP3.C knowledge authority: [Writing Core, jobs and mechanisms](../../engine/writing-knowledge/CORE.md)
+and [asset dispositions](../../engine/writing-knowledge/ASSET-MAP.md).
+Knowledge model only: existing runtime psychology/title guards and read_files
+remain unchanged. Do not treat optional reference as permission to bypass them.
+
 RP3.B creator isolation: [creator boundary and configuration](CREATOR-BOUNDARY-B1.md).
 
 RP3.A maintenance authority: [canonical semantics and parity](SEMANTICS-A1.md).

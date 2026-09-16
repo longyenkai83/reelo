@@ -1,0 +1,219 @@
+[
+  {
+    "job": "TEACH",
+    "when_to_use": "Giải thích hoặc giúp thực hiện một việc.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "problem_or_question"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "PROBLEM / QUESTION",
+      "USEFUL DISTINCTION",
+      "EXPLANATION",
+      "EXAMPLE / PROOF when needed",
+      "APPLICATION / TAKEAWAY"
+    ],
+    "reader_value": "Hiểu rõ hơn hoặc dùng được điều vừa học.",
+    "truth_limits": "Không ép belief shift; claim thực tế cần nguồn.",
+    "completion_condition": "Người đọc hiểu distinction hoặc takeaway đã hứa."
+  },
+  {
+    "job": "DIAGNOSE",
+    "when_to_use": "Soi một biểu hiện hoặc câu hỏi có cơ sở quan sát.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "observed_symptom_or_question"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "OBSERVED SYMPTOM / QUESTION",
+      "POSSIBLE MECHANISM",
+      "HOW TO RECOGNIZE",
+      "CONSEQUENCE",
+      "BETTER QUESTION / NEXT STEP"
+    ],
+    "reader_value": "Phân biệt khả năng và biết câu hỏi tiếp theo.",
+    "truth_limits": "Không chẩn đoán hidden motive như truth; possible mechanism phải giữ mức chắc chắn và phạm vi.",
+    "completion_condition": "Làm rõ cách nhận ra khả năng, không áp kết luận lên người đọc."
+  },
+  {
+    "job": "BELIEF_SHIFT",
+    "when_to_use": "Xem lại một frame có bằng chứng hoặc được đánh dấu giả thuyết.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "supported_or_hypothetical_current_frame"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "CURRENT FRAME",
+      "TENSION / EVIDENCE",
+      "ALTERNATIVE FRAME",
+      "SUPPORT",
+      "PRACTICAL IMPLICATION"
+    ],
+    "reader_value": "Có cơ sở xem lại cách hiểu cũ.",
+    "truth_limits": "Old belief phải supported hoặc HYPOTHESIS; không bịa audience belief.",
+    "completion_condition": "Alternative frame được support và có implication rõ."
+  },
+  {
+    "job": "STORY",
+    "when_to_use": "Chuyện có thật giúp ý chính có ý nghĩa hoặc chất người.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "sourced_story_with_relevant_job"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "additional_sourced_detail"
+    ],
+    "core_sequence": [
+      "SITUATION",
+      "DESIRE",
+      "TENSION / CONFLICT",
+      "TURN / CHANGE",
+      "MEANING",
+      "READER PAYOFF"
+    ],
+    "reader_value": "Nhận meaning qua trải nghiệm có nguồn.",
+    "truth_limits": "Không fabricate realization/emotion/result/quote/climax để lấp khoảng trống; ADJACENT không thành DIRECT proof.",
+    "completion_condition": "Meaning nối đến reader payoff; thiếu chi tiết thì không tự điền."
+  },
+  {
+    "job": "MISTAKE_LESSON",
+    "when_to_use": "Rút điều hữu ích từ sai lầm đã có evidence.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "real_creator_or_client_evidence"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "WHAT HAPPENED",
+      "WHAT WENT WRONG",
+      "CONSEQUENCE",
+      "WHAT CHANGED",
+      "WHAT THE READER CAN USE"
+    ],
+    "reader_value": "Thấy điều có thể dùng từ một sai lầm thật.",
+    "truth_limits": "Trải nghiệm, hậu quả và thay đổi được kể như thật phải có nguồn; không sáng tác để đủ sequence.",
+    "completion_condition": "Nêu rõ điều reader có thể dùng và giới hạn áp dụng."
+  },
+  {
+    "job": "CASE_STUDY",
+    "when_to_use": "Giải thích trường hợp và kết quả có chứng cứ.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "supported_case_process_and_result"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "BEFORE",
+      "PROBLEM",
+      "PROCESS / INTERVENTION",
+      "RESULT",
+      "WHAT IT MEANS"
+    ],
+    "reader_value": "Hiểu process, result và phạm vi suy ra.",
+    "truth_limits": "Results cần support; không market/purchase inflation hoặc suy correlation thành causality.",
+    "completion_condition": "Result và meaning có support, giới hạn được giữ."
+  },
+  {
+    "job": "REFRAME",
+    "when_to_use": "Đưa một cách nhìn khác có ích, không cần phủ nhận mạnh.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "supported_or_hypothetical_current_frame"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "CURRENT FRAME",
+      "TENSION / EVIDENCE",
+      "ALTERNATIVE FRAME",
+      "SUPPORT",
+      "PRACTICAL IMPLICATION"
+    ],
+    "reader_value": "Nhìn rõ hơn một khả năng khác.",
+    "truth_limits": "Old belief phải supported hoặc HYPOTHESIS; không tự gán niềm tin hay động cơ cho audience.",
+    "completion_condition": "Frame mới có support và giúp hiểu/ứng dụng."
+  },
+  {
+    "job": "PERSUADE",
+    "when_to_use": "Mời cân nhắc một lựa chọn khi mục đích bài thực sự thuyết phục.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "grounded_proposition_and_support"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE",
+      "PAS",
+      "AIDA"
+    ],
+    "core_sequence": [
+      "RELEVANT QUESTION / NEED",
+      "REASON TO CONSIDER",
+      "SUPPORT / LIMITATIONS",
+      "INVITATION"
+    ],
+    "reader_value": "Có cơ sở cân nhắc lựa chọn mà không bị áp đặt.",
+    "truth_limits": "PAS/AIDA chỉ cho persuasive job; không bịa pain, fear, social proof, offer, demand hoặc hứa kết quả.",
+    "completion_condition": "Lý do, support, giới hạn và lời mời nhất quán; không buộc người đọc mua."
+  },
+  {
+    "job": "REFLECT",
+    "when_to_use": "Mở một suy ngẫm hoặc liên hệ có ý nghĩa.",
+    "required_inputs": [
+      "one_idea",
+      "reader_value",
+      "observation_or_nonfactual_reflective_premise"
+    ],
+    "optional_inputs": [
+      "psychology_reference",
+      "contrast_technique",
+      "story_selection_DIRECT_ADJACENT_NONE"
+    ],
+    "core_sequence": [
+      "OBSERVATION / MOMENT",
+      "MEANING",
+      "READER CONNECTION",
+      "OPEN OR COMPLETE PAYOFF"
+    ],
+    "reader_value": "Nhận một cách nhận ra hoặc suy ngẫm, có thể yên tĩnh.",
+    "truth_limits": "Proof NONE chỉ cho non-factual reflection không cần proof; claim thực tế vẫn cần nguồn.",
+    "completion_condition": "Có payoff phù hợp lời mở; không bắt checklist/action/CTA."
+  }
+]
