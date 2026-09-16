@@ -1,5 +1,9 @@
 # V2 Content Intelligence consumer
 
+RP3.A maintenance authority: [canonical semantics and parity](SEMANTICS-A1.md).
+Read before changing mode, V2 title or Critic severity/repair meanings. This does
+not reopen C5 or authorize creative execution.
+
 Read [V2-BOUNDARY.md](V2-BOUNDARY.md). Phase 9 is pending architect review. This is an
 opt-in consumer in the existing Reelo creative engine; legacy batch input remains supported.
 

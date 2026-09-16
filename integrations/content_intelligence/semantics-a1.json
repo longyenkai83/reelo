@@ -1,0 +1,188 @@
+{
+  "version": "reelo.canonical-semantics.a1.1",
+  "scope": "V2 maintenance authority only; verified existing runtime mirrors, no runtime injection. RP3.A owner approval supersedes legacy-only ownership for these families.",
+  "modes": {
+    "REEL": {
+      "meaning": "Spoken Vietnamese written to be spoken aloud; breath, rhythm and conversational transitions. Not a short article read aloud.",
+      "representation": "REEL means spoken Vietnamese with breath and conversational rhythm"
+    },
+    "SHORT_ARTICLE": {
+      "meaning": "Concise written Vietnamese.",
+      "representation": "SHORT_ARTICLE means short written content"
+    },
+    "LONG_ARTICLE": {
+      "meaning": "Deeper written Vietnamese argument/narrative.",
+      "representation": "LONG_ARTICLE means long written content"
+    }
+  },
+  "mode_selection": "Before Writer, retain the approved selected_mode when present; historical approvals without it retain existing plan format fallback. Platform is a delivery constraint, not a mode. No schema migration.",
+  "title_checks": [
+    {
+      "id": 1,
+      "meaning": "Separate psychology, real numbered title frame (or declared self-made) and treatment columns. Verify library membership, not self-certification.",
+      "anchors": [
+        "BA CỘT KHAI RIÊNG",
+        "NGUYÊN LÝ TÂM LÝ",
+        "SỐ khung có thật",
+        "TỰ CHẾ",
+        "TRỤC BÀI"
+      ]
+    },
+    {
+      "id": 2,
+      "meaning": "Address a specific supported audience context/moment/exact source quote in Zone A. V2 overrides legacy persona/occupation invention and creator-centered preference.",
+      "anchors": [
+        "NHẮM MỘT NGƯỜI",
+        "khoảnh khắc",
+        "câu khách nói nguyên văn"
+      ]
+    },
+    {
+      "id": 3,
+      "meaning": "Understandable alone: topic and reader benefit immediately clear.",
+      "anchors": [
+        "ĐỌC RỜI CÓ HIỂU",
+        "về cái gì",
+        "có gì cho họ"
+      ]
+    },
+    {
+      "id": 4,
+      "meaning": "No internal role, process, pillar or formula labels in the public title.",
+      "anchors": [
+        "KHÔNG TỪ NỘI BỘ",
+        "nhãn vai",
+        "thuật ngữ quy trình"
+      ]
+    },
+    {
+      "id": 5,
+      "meaning": "Title and final hook consistent; do not spoil the withheld conclusion. Naming the topic/problem is allowed.",
+      "anchors": [
+        "ĐÁ NHAU VỚI CÂU MỞ",
+        "gọi tên chủ đề",
+        "KẾT LUẬN RA SAO"
+      ]
+    },
+    {
+      "id": 6,
+      "meaning": "Title names the subject and earns the click; hook retains attention. Do not use hook withholding to make the title obscure.",
+      "anchors": [
+        "ĐÚNG VAI",
+        "BẤM VÀO",
+        "KHÔNG áp cho tiêu đề"
+      ]
+    },
+    {
+      "id": 7,
+      "meaning": "REEL only: title and final spoken hook share the same idea, or explicitly justify their separation. Does not force articles into Reel.",
+      "anchors": [
+        "RIÊNG REEL",
+        "CÙNG MỘT Ý",
+        "lý do",
+        "câu mở CHỐT"
+      ]
+    },
+    {
+      "id": 8,
+      "meaning": "Real separate table of 3–5 title options, with all three columns and verified references. For approved V2 execution the table is in the plan, not recreated in the draft.",
+      "anchors": [
+        "CÓ BẢNG TIÊU ĐỀ THẬT",
+        "3–5 phương án",
+        "trong chính bảng",
+        "Đối chiếu Reference"
+      ]
+    }
+  ],
+  "title_failure": "All eight false results block V2 PASS; malformed length fails closed. Three existing owner quality booleans remain separate, not a ninth title criterion. Legacy rubric exemptions do not remove any V2 transport slot.",
+  "hard_categories": [
+    "unsupported_identity",
+    "scope_broadening",
+    "unsupported_causality",
+    "quote_integrity",
+    "creator_truth_drift",
+    "external_fact_unsupported",
+    "market_validation_inflation",
+    "purchase_validation_inflation",
+    "contradiction_loss"
+  ],
+  "severity": {
+    "HARD BLOCK": "Any of the nine categories always normalizes to blocking/REVISE regardless of reported PASS/advisory. A detected unsupported assertion must not be hidden as publication requirement.",
+    "CREATIVE REVISE": "Existing failed title/quality/plan fidelity or other declared blocking creative finding prevents PASS; repair only within existing authority.",
+    "ADVISORY": "Non-blocking suggestion with no unresolved protected defect; cannot override any required false check.",
+    "PUBLICATION REQUIREMENT": "Outstanding research/disclosure/publication prerequisite; separate from draft quality. Omit/soften unsupported assertions within intent or block. No permission to assert unsupported facts or publish."
+  },
+  "unknown": {
+    "domain": "execution/integrity",
+    "quality_severity": false,
+    "grants_pass": false,
+    "automatic_retry": false,
+    "history": "Preserve original UNKNOWN. Existing audited reconciliation only, never a severity downgrade."
+  },
+  "repair_layers": {
+    "prose": "Writer/Rewrite",
+    "plan_expression": "Planner/Human Creative Gate",
+    "angle_meaning": "upstream Owner correction",
+    "customer_evidence_truth": "Customer Intelligence",
+    "state_source_approval": "Platform"
+  },
+  "repair_authority": "Classification is documentation, not an executable router. No new repair loop or authority. Writer cannot replace locked wording, plan, angle, evidence, state or approvals; existing maximum one rewrite unchanged.",
+  "locks": {
+    "hook": "exact approved wording",
+    "title": "exact approved wording",
+    "story": "Optional; NONE valid. Preserve selected source/classification when used."
+  },
+  "historical_word_counts": {
+    "status": "UNRESOLVED LEGACY GUIDANCE — benchmark/product decision required; no new universal hard blocker",
+    "mirrors": [
+      {
+        "path": ".claude/workflows/batch-content.js",
+        "text": "Reel 170–220"
+      },
+      {
+        "path": ".claude/skills/viet-script/SKILL.md",
+        "text": "210–240"
+      }
+    ]
+  },
+  "mirrors": [
+    {
+      "path": "integrations/content_intelligence/workflow-v2.js",
+      "required": [
+        "the old seven-item prompt is superseded for V2 only",
+        "Target a supported A context, moment or exact quote instead of the legacy customer profile",
+        "For candidate-table rubric inspect the supplied plan, not duplicate tables in the article",
+        "Selected hook/title are exact approved wording; use them unchanged",
+        "REEL is not a short article read aloud",
+        "SHORT_ARTICLE uses written-content rules, not spoken-Reel rules",
+        "code ALWAYS forces REVISE, even if you report PASS or advisory severity",
+        "Never hide these defects inside free-form notes or label them creative_quality/voice/format/other",
+        "omit or soften unsupported assertions while preserving selected intent, or report BLOCKED_PENDING_RESEARCH",
+        "NONE does not need a story"
+      ]
+    },
+    {
+      "path": "integrations/content_intelligence/V2-BOUNDARY.md",
+      "required": [
+        "8 ô tiêu đề",
+        "Mất kết quả: UNKNOWN, không tự chạy lại",
+        "Critic PASS không phải human approval hay permission to publish"
+      ]
+    },
+    {
+      "path": ".claude/agents/critic-ban-giam-khao.md",
+      "required": [
+        "thang 7 ô",
+        "V2-BOUNDARY.md",
+        "cong-kiem-chat-luong.md"
+      ]
+    },
+    {
+      "path": ".claude/workflows/batch-content.js",
+      "required": [
+        "Chấm đủ 7 ô"
+      ]
+    }
+  ],
+  "compatibility": "Legacy seven-box prompt and eight-box library coexist historically. Preserve both, explicitly isolate via V2 override; this is not proof of legacy semantic consistency. Do not globally rewrite legacy."
+}
