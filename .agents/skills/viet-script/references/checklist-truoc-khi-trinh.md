@@ -5,7 +5,7 @@
 
 ## 🔴 GATE BẰNG CHỨNG (anh Tuấn chốt 2026-07-13 — chống "nói đã làm")
 - [ ] **Header bài có dòng 1 — `Reference đã mở`:** liệt kê file + **trích 1 câu luật gốc** (Carousel trích LUẬT VÀNG `format-carousel.md`; theo tuyến trích tên khung `tuyen-<x>.md`). **Không trích được = chưa mở file = chưa đủ điều kiện viết.**
-- [ ] **Header dòng 2 — `GATE 5 câu`** chạy lại RIÊNG cho bài này, không lặp bài trước: (1) nói với ai · (2) họ trăn trở gì · (3) vì sao quan tâm Hiền **qua bài này cụ thể** · (4) cảm xúc bốc cao hay man mác · (5) share thì họ nói gì về CHÍNH HỌ.
+- [ ] **Header dòng 2 — `GATE 5 câu`** chạy lại RIÊNG cho bài này, không lặp bài trước: (1) nói với ai · (2) họ trăn trở gì · (3) vì sao quan tâm creator **qua bài này cụ thể** · (4) cảm xúc bốc cao hay man mác · (5) share thì họ nói gì về CHÍNH HỌ.
 - [ ] **Header dòng 3 — `Critic: ĐẠT vòng N (ngày)`.** Chưa có verdict → ghi `Critic: CHƯA` và **KHÔNG được trình**.
 - [ ] **Số chữ: đếm THẬT** (không ước lượng "~"), ghi con số vào header. Trong trần: Reel 210–240 · Bài ngắn 200–400 · Bài dài 400–800 · Video dài ≥1000.
 - [ ] **Chiến lược ghi rõ:** Nhóm · Tầng · Giai đoạn · Chặng.

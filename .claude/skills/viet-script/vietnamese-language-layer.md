@@ -23,18 +23,18 @@ purpose: |
 
 ---
 
-## 1. QUY TẮC GIỌNG VIỆT CHO CHỊ (rút từ đối chứng) — ⭐ ÁP MỖI BÀI
+## 1. CÔNG CỤ GIỌNG VIỆT (chọn theo voice creator) — ⭐ ÁP MỖI BÀI
 
 > Mấy điểm làm văn nghe "người Việt nói chuyện", không "framework dịch". Áp khi viết, rà khi xong.
 
-- **Tình thái từ VỪA ĐỦ** — đâu · thôi · nha · nhé · đi · mà · rồi · đó. Khoảng mỗi 2–3 câu một từ → tạo nhạc. ⚠️ **Đừng lạm dụng**: rải quá tay thành lê thê, mất nhịp. Khi phân vân, ưu tiên **cô đọng + câu ngắn có điểm rơi** (voice chị) hơn là thêm tình thái từ.
+- **Tình thái từ VỪA ĐỦ** — đâu · thôi · nha · nhé · đi · mà · rồi · đó. Mật độ theo cadence của creator; không lấy đối chứng một brand làm định mức chung. ⚠️ **Đừng lạm dụng**: rải quá tay thành lê thê, mất nhịp. Khi phân vân, theo ưu tiên nhịp/câu trong voice được cung cấp; thiếu thì dùng tiết chế, không tự gán sở thích riêng.
 - **Nối câu mềm** bằng *mà / thì / rồi*, tránh chấm cụt 1 vế.
 - **Từ đời thường + tăng cường** — hẳn lên · luôn · bừng · khéo. Tránh cả từ dịch ("viết tuôn", "đổ ra") lẫn từ sách ("giải phóng tâm trí").
 - **Tổ chức theo bối cảnh** thay đánh số khô — "tối nay / sáng mai", mở đoạn song song "Với X: …".
 - **Bài tương phản:** tách dòng "Đừng nói: … / Hãy nói: …".
-- **CTA mời tương tác:** câu hỏi cá nhân + "kể/chia sẻ cho mình nha" (KHÔNG "like/share dạo").
+- **CTA:** theo intent đã chọn và CTA preferences của creator; không mặc định câu mời hoặc đại từ kết bài từ một brand.
 
-> Giữ nét riêng của chị: câu ngắn có điểm rơi, ít dấu chấm than, không hô hào.
+> Giữ nét riêng trong voice-profile/writing-rules được cấu hình, gồm độ dài câu, dấu câu và cường độ.
 
 ## ⭐ REEL = VĂN NÓI, KHÔNG PHẢI VĂN VIẾT (rà mỗi Reel/video)
 
@@ -139,7 +139,7 @@ Mọi góc nhìn đặt ở HIỆN TẠI, kiến tạo TƯƠNG LAI, thúc đẩy
 **CẤM TUYỆT ĐỐI cụm hoài cổ rập khuôn AI (mở bài lẫn thân bài):**
 - "Từ xa xưa đến nay" / "Từ xưa đến nay" · "Trong quá khứ" · "Trước đây" (câu dạo vô chủ) · "Theo truyền thống" · "Ngày xưa" (dạo đầu vô chủ) · "Từ bao đời nay" / "Thời nào cũng vậy" / "Xưa nay".
 
-**⚠️ Ranh giới — KHÔNG cấm kể chuyện thật:** bài EEAT vẫn được kể trải nghiệm quá khứ THẬT của chị (có chủ thể "mình" · có mốc cụ thể "Năm 2022, mình…" · dẫn về bài học cho HIỆN TẠI / hành động TƯƠNG LAI).
+**⚠️ Ranh giới — KHÔNG cấm kể chuyện thật:** bài EEAT vẫn được kể trải nghiệm quá khứ THẬT của creator (có chủ thể "mình" · có mốc cụ thể "Năm 2022, mình…" · dẫn về bài học cho HIỆN TẠI / hành động TƯƠNG LAI).
 - ✅ "Năm 2022 mình mất trắng lô hàng đầu tiên. Từ hôm đó mình có nguyên tắc này, bạn dùng được ngay hôm nay."
 - ❌ "Từ xa xưa đến nay, kinh doanh luôn đầy rủi ro."
 
@@ -189,7 +189,7 @@ Cấm gán cảm xúc vào đầu nhân vật: *"chị ấy cảm thấy vô cù
 
 ## 5. CHECKLIST TRƯỚC KHI ĐĂNG (6 câu cảm giác, không đếm chính xác)
 1. **Audience test** — audience có thấy mình trong bài, hay thấy xa lạ?
-2. **Voice test** — đọc to lên, có nghe giống chị đang nói không?
+2. **Voice test** — đọc to lên, có nghe giống creator được chọn đang nói không?
 3. **Nhạc tính** — có nhạc tính tiếng Việt, hay nghe như "Anh dịch sang Việt"?
 4. **Cụ thể** — có chi tiết cụ thể, hay toàn tính từ trừu tượng?
 5. **Câu rỗng** — có câu nào bỏ đi mà ý vẫn nguyên? → cắt.

@@ -20,10 +20,10 @@ async function writeV2() {
   const refs = [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)]
   const constraints = `V2 takes precedence over conflicting legacy source/psychology/profile rules.
     Creator truth is a separate boundary: external knowledge attributed to an author is not
-    evidence that the creator learned it, lived it or met that author. Never turn "Brian Tracy
-    says X" into "I learned X from Brian Tracy" without explicit creator evidence. Customer
+    evidence that the creator learned it, lived it or met that author. Never turn an attributed
+    author's claim into first-person learning without explicit creator evidence. Customer
     evidence is not creator experience; illustrations are not factual personal history.
-    Preserve context scope: "rent" alone does not establish business premises, and distinct
+    Preserve context scope: a named expense alone does not establish its setting, and distinct
     evidence items do not establish the same situation. Retain unknown context. Translate
     quotes only as explicitly labeled translations/paraphrases, never fake literal wording.
     Creative examples remain clearly hypothetical, not customer causality or market proof.
@@ -57,17 +57,17 @@ async function writeV2() {
     Return the structured draft once the necessary checks are complete; no full-vault audit.
     Use only the read files provided. Do not guess private source paths. Missing required creative
     references must be reported. A synthetic fixture is not a real customer endorsement.`
-  const ownerQuality = `OWNER-CONFIRMED V2 QUALITY (Anh Tuan, C5.6):
-    Keep the reader (ban / bạn) the center of gravity. Creator voice (minh / mình, toi / tôi,
-    Hien / Hiền) is welcome for a useful real story, lived credibility or brief observation;
+  const ownerQuality = `OWNER-CONFIRMED V2 QUALITY:
+    Keep the reader (ban / bạn) the center of gravity. The configured creator's first-person
+    voice is welcome for a useful real story, lived credibility or brief observation;
     then return attention to the reader. Do not make reader-centered decision support a creator
     monologue. More creator voice is legitimate only when the selected intent/format is explicitly
     personal-story-first, not a label invented to bypass this requirement. Do not count pronouns.
     A title must make semantic sense immediately, relate directly to the selected problem/angle,
     use natural Vietnamese and offer useful curiosity/tension to the reader. Do not rely on
     awkward poetic contrast, meaningless opposition or AI-style wordplay for its own sake.
-    Owner rejected "Tiền thuê nặng, hay phần giữ lại đang mỏng?". Do not reuse it or merely
-    paraphrase it; choose a meaningfully clear title from the selected problem, not this word game.
+    Do not disguise a meaningless contrast by paraphrasing it; choose a meaningfully clear
+    title from the selected problem. Clarity matters more than clever wording.
     Invite reflection rather than lecture, diagnose or impose conclusions. Questions, suggestions,
     tentative possibilities and real creator experience offered as one lens are welcome.
     Do not tell readers what their real problem is without evidence, prescribe what they should
@@ -75,7 +75,7 @@ async function writeV2() {
     Keep natural Vietnamese and psychological resonance; do not add emotion just for intensity.
     All truth guards still apply: reader-centered address is not permission to invent reader facts,
     and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
-  let shared = constraints + '\n' + ownerQuality + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
+  let shared = constraints + '\n' + ownerQuality + '\n' + creatorContext(assets) + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
   const approved = V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
   if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +

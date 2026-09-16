@@ -2,7 +2,7 @@
 
 > **Nguồn công thức:** prompt mẫu anh Tuấn (2026-06-13) + luật Reelo (chống bịa · ghi nguồn).
 > **Mục đích:** chắt lọc 1 nội dung dài (wiki · transcript · sách · ghi chú anh dán) → carousel **5–8 slide** kiểu IG/Twitter.
-> 🔑 **Carousel = NỘI DUNG KIẾN THỨC GỐC** (chia sẻ insight/quote của người giỏi, ghi nguồn) — **KHÔNG bắt buộc voice Hiền** (khác reel/video). Định dạng thứ 3 (slide): KHÔNG dùng 17 format / 6 bước.
+> 🔑 **Carousel = NỘI DUNG KIẾN THỨC GỐC** (chia sẻ insight/quote của người giỏi, ghi nguồn) — **KHÔNG bắt buộc voice riêng** (khác reel/video). Định dạng thứ 3 (slide): KHÔNG dùng 17 format / 6 bước.
 
 ## 🔴 LUẬT VÀNG (anh Tuấn chốt 2026-07-13): CAROUSEL = HOW-TO ÁP DỤNG ĐƯỢC
 - Carousel phải cho người đọc **LÀM ĐƯỢC NGAY**: checklist tự soi · các bước cụ thể · dấu hiệu nhận biết · framework · công thức điền. Đọc xong họ cầm về **một việc áp dụng được**.
@@ -30,8 +30,8 @@ Carousel ưu tiên là **1 INFOGRAPHIC có cấu trúc** (đọc 1 lần hiểu 
 
 ## Style viết
 - Viết như **tweet**, không như sách giáo khoa. Câu ngắn, tự nhiên. Xưng **"bạn"**.
-- 🔑 **KHÔNG bắt buộc voice Hiền** — giữ **trung thực với KIẾN THỨC GỐC**, diễn đạt rõ ràng dễ hiểu. (Trung lập là được; hợp thì nhẹ chất Hiền, KHÔNG ép giọng.)
-- 🔴 **TIẾNG VIỆT TỰ NHIÊN — chống "Google dịch" (BẮT BUỘC):** không ép voice Hiền **≠** cho phép văn khô/dịch máy. PHẢI áp **lớp ngôn ngữ tiếng Việt** (`vietnamese-language-layer.md`): câu có **nhạc tính + đời thường + tình thái từ nhẹ** (đó · mà · thôi · cả · chứ…). **KHÔNG dịch thẳng cấu trúc tiếng Anh.** **VIỆT HÓA ẩn dụ** — đừng bê "host a party" / "ride the wave" / "Risk is a component of progress" nguyên văn; đổi thành cách nói Việt. **Gọn ≠ khô.** *(Ví dụ: "Rủi ro là một phần của tiến bộ" ❌ → "Không liều một chút thì chẳng tiến được bước nào" ✅.)*
+- 🔑 **KHÔNG bắt buộc voice riêng** — giữ **trung thực với KIẾN THỨC GỐC**, diễn đạt rõ ràng dễ hiểu. (Trung lập là được; hợp thì nhẹ chất creator, KHÔNG ép giọng.)
+- 🔴 **TIẾNG VIỆT TỰ NHIÊN — chống "Google dịch" (BẮT BUỘC):** không ép voice riêng **≠** cho phép văn khô/dịch máy. PHẢI áp **lớp ngôn ngữ tiếng Việt** (`vietnamese-language-layer.md`): câu có **nhạc tính + đời thường + tình thái từ nhẹ** (đó · mà · thôi · cả · chứ…). **KHÔNG dịch thẳng cấu trúc tiếng Anh.** **VIỆT HÓA ẩn dụ** — đừng bê "host a party" / "ride the wave" / "Risk is a component of progress" nguyên văn; đổi thành cách nói Việt. **Gọn ≠ khô.** *(Ví dụ: "Rủi ro là một phần của tiến bộ" ❌ → "Không liều một chút thì chẳng tiến được bước nào" ✅.)*
 - Không từ thừa. **In đậm** dòng chính mỗi slide. Danh sách nhỏ dùng **→** (không bullet).
 - Mỗi slide nên có 1 ví dụ / số liệu / ẩn dụ cụ thể.
 
@@ -73,7 +73,7 @@ Slide cuối (CTA)
 ## LƯU + QUẢN LÝ (folder riêng + Notion)
 - Lưu vào **`carousel-output/`** (folder RIÊNG, KHÔNG chung `scripts-output`): tên `YYYY-MM-DD-chu-de-carousel.md`. Đầu file: **Định dạng: Carousel · Trạng thái: 🟡 Chờ thiết kế · Nguồn**.
 - Cập nhật **`carousel-output/_INDEX.md`** (1 dòng + trạng thái).
-- **Đẩy Notion** (DB Carousel — ID ở `notion-config.md` mục 4): nội dung slide + caption + nguồn vào trang; cột **Trạng thái = "Chờ thiết kế"**. → **Chị Hiền tự quản trên Notion** (đã thiết kế / chưa). **KHÔNG tự đặt "Đã thiết kế".**
+- **Đẩy Notion** (DB Carousel — ID ở `notion-config.md` mục 4): nội dung slide + caption + nguồn vào trang; cột **Trạng thái = "Chờ thiết kế"**. → **Creator tự quản trên Notion** (đã thiết kế / chưa). **KHÔNG tự đặt "Đã thiết kế".**
 
 ## Số slide
 Instagram / Facebook: **5–8 slide**.

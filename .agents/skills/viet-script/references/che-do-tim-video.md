@@ -13,7 +13,7 @@
 
 2. **Lọc TỐT NHẤT** từ list trả về:
    - Xếp hạng theo **views + likes/tương tác + comments** cao.
-   - **+ Hợp NGÁCH Hiền (bắt buộc):** đọc title/caption → giữ chủ đề phụ nữ kinh doanh · thương hiệu cá nhân · nội tâm/EQ · lối sống/khí chất (ngách rộng — xem `voice-profile.md`). **Video lạc ngách dù view cao cũng BỎ** (inbox không thành rác).
+   - **+ Hợp NGÁCH creator được chọn (bắt buộc):** đọc title/caption → đối chiếu ngách khai trong private workspace hiện tại; không mặc định pillar/audience của brand khác. **Video lạc ngách dù view cao cũng BỎ** (inbox không thành rác).
    - Giữ **top N** (mặc định 8).
    - ⚠️ TikTok trả gộp "stats" — nếu không tách rõ views/like/comment thì xếp theo cái có; thiếu metadata → ghi rõ, **KHÔNG bịa số**.
 

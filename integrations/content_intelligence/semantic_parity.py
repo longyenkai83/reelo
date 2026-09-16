@@ -97,6 +97,9 @@ def check_mirrors(root=ROOT, *, overrides=None):
     # above use their own clauses/schema, never cross-host byte equality.
     if js not in read('.claude/workflows/batch-content.js'):
         issues.append('embedded_workflow_sync')
+    creator = read('integrations/content_intelligence/creator-context.js').rstrip()
+    if not creator or creator not in read('.claude/workflows/batch-content.js'):
+        issues.append('embedded_creator_context_sync')
     return issues
 
 

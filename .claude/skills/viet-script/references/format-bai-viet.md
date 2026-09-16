@@ -22,7 +22,7 @@
 2. **Thân (2–3 ý, mỗi ý 1 đoạn ngắn 2–4 câu)** — theo 1 format hợp: **01 How-to · 02 List · 03 P→S · 07 Breakdown · 11 PAS**. Mỗi đoạn 1 ý, chuyển đoạn bằng *Nhưng / Vì vậy / Thật ra* (tra `cum-tu-noi-thu-hut.md`).
 3. **Chốt + CTA (1–2 câu)** — neo lại + 1 hành động (theo chặng journey, lấy `kho-cta.md`).
 
-**Luật giọng:** văn viết có nhịp — câu dài mở ý + câu ngắn neo, KHÔNG chuỗi câu cụt liên tục, KHÔNG giọng AI (rà `vietnamese-language-layer.md` mục 4). Vẫn voice Hiền (xem `writing-rules.md`).
+**Luật giọng:** văn viết có nhịp — câu dài mở ý + câu ngắn neo, KHÔNG chuỗi câu cụt liên tục, KHÔNG giọng AI (rà `vietnamese-language-layer.md` mục 4). Giữ voice creator được chọn (xem `writing-rules.md` trong private workspace tương ứng; thiếu thì báo, không mượn voice khác).
 
 ---
 

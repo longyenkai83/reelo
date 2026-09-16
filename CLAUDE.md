@@ -9,23 +9,23 @@
 > ưu tiên hơn các chỉ dẫn legacy bên dưới về profile/customer truth, tâm lý suy đoán,
 > phần trăm tu từ và chấm tiêu đề. Không có packet V2: giữ quy trình cũ.
 
-# CLAUDE.md — Reelo (bản của chị Trịnh Nhi Hiền)
+# CLAUDE.md — Reelo (engine dùng chung)
 
 > **Project TỰ ĐỦ.** Mọi luật ở file này + file trong project. Mở folder này trong Claude Code là chạy đúng.
-> **Xưng "em"; gọi "chị Hiền" (vận hành) hoặc "anh Tuấn" (kỹ sư). 100% tiếng Việt.**
+> **Xưng hô theo người vận hành/creator được xác định trong workspace; không đoán tên. 100% tiếng Việt.**
 
 ## Reelo là gì
 Hệ Quản Trị Tri Thức Lũy Tiến: tiêu hóa nguồn → lưu **3 lớp (RAW → WIKI → OUTPUT)** → áp chiến lược (Ma trận 30 ngày) → ra **Reel · Video dài · Carousel** đúng giọng, đẩy Notion. 3 cửa nạp: **Video** (tokscript) · **Insight thô** (Google Drive) · **Chiến lược** (Notion).
 
 ## 🗂️ Bản đồ folder (tái cấu trúc 2026-07-09 — tách để BÁN)
 - **`.claude/`** = ENGINE (skills · agents). **`engine/cong-thuc-viral/`** = công thức chung (hook · tiêu đề · tâm lý · critic) + **`mau-brand/`** (template tạo brand mới).
-- **`_private/`** = DATA RIÊNG chị Hiền — **KHÔNG bán**: `brand/nhi-hien/` (voice · luật viết · kho chuyện · ma trận · notion-config) + `kho-kien-thuc/` (raw · wiki).
+- **`_private/`** = DATA RIÊNG của creator — **KHÔNG bán**: `brand/<brand>/` (voice · luật viết · kho chuyện · ma trận · notion-config) + `kho-kien-thuc/` (raw · wiki).
 - **`scripts-output/` · `carousel-output/`** = thành phẩm. **`scripts/export.sh`** = đóng gói bản bán (tự loại `_private/` + output).
 - ▶ **Bản BÁN** (mở ra KHÔNG có `_private/`): tự chạy chế độ intake — gọi `/bat-dau` để khách khai brand mới vào `_private/brand/<brand>/`, engine giữ nguyên.
 
 ## 1. ĐIỀU KIỆN VẬN HÀNH & KẾT NỐI (kiểm trước khi chạy)
 - [ ] **tokscript (MCP)** → lấy transcript video (YT/TikTok/IG). Chưa nối → báo chị. ⚠️ CẤM lấy transcript cách khác (không Python/script ngoài/cài package).
-- [ ] **Notion** → đẩy bài/carousel + soi Ma trận (ID: `.../_private/brand/nhi-hien/notion-config.md`).
+- [ ] **Notion** → đẩy bài/carousel + soi Ma trận (ID: `.../_private/brand/<brand>/notion-config.md`).
 - [ ] **Google Drive** (connector THÊM — CHỈ cho `/nap-insight`) → đọc insight quét. *Chưa nối → CHỈ `/nap-insight` dừng; phần còn lại VẪN CHẠY.*
 - *IF tokscript/Notion lỗi → DỪNG việc liên quan, báo chị. Hướng dẫn nối: `README.md` (mục Cài đặt 3 bước).*
 
@@ -70,7 +70,7 @@ Hệ Quản Trị Tri Thức Lũy Tiến: tiêu hóa nguồn → lưu **3 lớp 
 2. 🔴 **CONTENT CHO THẬT, CHO ĐỦ — SẢN PHẨM BÁN THỜI GIAN, KHÔNG BÁN THÔNG TIN** *(anh Tuấn chỉnh 2026-07-20)*:
    - ✅ **Content phải hướng dẫn ĐẦY ĐỦ để khách LÀM ĐƯỢC và ĐẠT ĐƯỢC điều họ muốn.** KHÔNG giấu bớt, KHÔNG cắt nửa vời để ép mua.
    - 🔴 **Cái khách thiếu KHÔNG phải kiến thức — mà là THỜI GIAN, TỐC ĐỘ và NGƯỜI ĐI CÙNG.** Đọc xong họ biết phải làm gì; nhưng tự mò thì mất hàng tháng, làm một mình thì bỏ dở giữa chừng.
-   - **Sản phẩm bán:** làm cùng · rút ngắn đường · sửa tại chỗ · hệ thống ĐANG CHẠY thay vì đống kiến thức. *(Đúng lời hứa gói 90: "Bán một hệ thống ĐANG HOẠT ĐỘNG, không bán một đống kiến thức.")*
+   - **Sản phẩm bán:** làm cùng · rút ngắn đường · sửa tại chỗ · hệ thống ĐANG CHẠY thay vì đống kiến thức. Offer cụ thể lấy từ workspace đang được chọn, không mặc định gói của một creator.
    - ⚖️ **Câu chốt ranh giới:** *"Bán như không bán: cho đủ giá trị để khách tự muốn bước tới."* — nguyên văn từ bài **vựa mực ĐÃ VIRAL** của chị. **Chị đã thắng bằng CHO ĐỦ, không phải giấu bớt.**
    - ❌ **BỎ luật cũ** *("content không được giải hết cái sản phẩm bán")* — sai bản chất, mâu thuẫn với chính offer của chị.
 3. **Mỗi bài phải khai được nó phục vụ mảnh nào của sản phẩm.** Không khai được = bài lẻ vô hướng.
@@ -93,7 +93,7 @@ Hệ Quản Trị Tri Thức Lũy Tiến: tiêu hóa nguồn → lưu **3 lớp 
    - 🔴 **RAW quá lớn (>~100KB) = KHO LẠNH:** chuyển sang `_private/kho-kien-thuc/raw-archive/` + để lại **file con trỏ CÙNG TÊN** ở `raw/` (giữ wikilink `[[raw/...]]` không gãy). File trong `raw-archive/` **CHỈ `grep`/`Select-String` từ khoá — CẤM Read/đọc cả file** (tránh "Prompt is too long"). *(Đã áp cho `2026-07-19-longguru-caption-bank.md` — 353KB, 2026-07-21.)*
 
 ## 4. PHÂN VAI
-- **Chị Hiền = quyền quyết định cao nhất (CHỦ):** quyết + duyệt mọi thay đổi; vận hành hằng ngày — viết · nạp nguồn · carousel · cập nhật **DATA brand của chị** (voice · hồ sơ khách · pillars · kho chuyện · notion-config).
+- **Chủ workspace = quyền quyết định cao nhất (CHỦ):** quyết + duyệt mọi thay đổi; vận hành hằng ngày — viết · nạp nguồn · carousel · cập nhật **DATA brand của chị** (voice · hồ sơ khách · pillars · kho chuyện · notion-config).
 - **Kỹ sư (anh Tuấn + em) = THI CÔNG lõi hệ thống** (SKILL · luật · format · gate · công thức) **theo quyết định của chị** — sửa **từng file, có kiểm soát** (chống loạn bản).
 - **Gặp lỗi / Reelo làm sai** → **SỬA NGAY** (kỹ sư = bộ não sống, làm chung real-time). Nếu là **lỗi gốc lặp lại** → siết luật/gate tương ứng + ghi 1 dòng vào `NHAT-KY-PHIEN.md` (vì sao siết). *(Sổ lỗi cũ đã đóng băng ở `_archive/` — không còn dùng làm cầu nối vì đã sửa tại chỗ.)*
 

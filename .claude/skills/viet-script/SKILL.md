@@ -53,7 +53,7 @@ disable-model-invocation: true
   - Không có chiến dịch nào đang chạy → chỉ soi ma trận.
 - [ ] **🧭 KHUNG KHAI THÁC (khi lên chiến lược / anh Tuấn đào insight):** đọc `_private/brand/<brand>/khung-khai-thac-vpc.md` — **Keyword → Pain/Gain khách (Value Proposition Canvas) → cách giải quyết → phân tầng thị trường** (cách phổ thông = Lạnh/Ấm · cách RIÊNG nhanh-tiện hơn = Nóng/Bán). Insight anh đưa → phân loại Gain Creator / Pain Reliever / Product rồi mới chọn tuyến.
 - [ ] **🔍 IF bài SEO / bài "cách…", "làm sao…" / đang tự chọn chủ đề (KHÔNG có link nguồn):** mở `_private/brand/<brand>/kho-tu-khoa-chu-de.md` — lấy **từ khóa có người tìm thật** + intent → tầng phễu, rải từ khóa vào tiêu đề & hook. *(Bài có link nguồn → BỎ QUA, đừng mở.)*
-- [ ] **Nạp nguồn:** Qua `tokscript` (Video), `notion-fetch` hoặc Hiền cấp.
+- [ ] **Nạp nguồn:** Qua `tokscript` (Video), `notion-fetch` hoặc creator cấp.
 - [ ] **Bảo vệ RAW (Luật 3 lớp):** Trích ý xong → XÓA TRANSCRIPT. `RAW/` CHỈ GIỮ YAML frontmatter làm con trỏ.
 
 #### BƯỚC 3: DỌN WIKI & TẠO BẢN ĐỒ KHAI THÁC

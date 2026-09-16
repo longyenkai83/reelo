@@ -15,7 +15,7 @@
 - Trước khi viết thân bài, phải đúc kết được **1 TRỤC bài đắt** — 1 ý lõi làm xương sống cả bài.
 - **Trục được chọn 1 trong các dạng** (KHÔNG bắt buộc phải dùng "Không phải X, mà là Y"):
   - **Reframe / Contrast** — "Không phải X, mà là Y" (đảo góc nhìn). *Chỉ dùng khi thật sự là dạng đắt nhất cho bài — đừng mặc định.*
-  - **Ẩn dụ trung tâm** — 1 hình ảnh xuyên suốt (ưu tiên NEO đời sống thật của chị: bánh kem · Pilates · Đà Nẵng · làm mẹ…).
+  - **Ẩn dụ trung tâm** — 1 hình ảnh xuyên suốt (ưu tiên NEO đời sống thật được nguồn creator hiện tại xác nhận; không có danh sách cảnh/địa điểm/nghề mặc định).
   - **Hình ảnh / khoảnh khắc** — 1 cảnh cụ thể sờ được làm điểm tựa.
   - **Nghịch lý** — 2 sự thật va nhau khiến người đọc dừng lại.
   - **Tuyên ngôn** — 1 khẳng định dứt khoát, có nền.
@@ -30,7 +30,7 @@
 
 **4. RANH GIỚI "TỰ NGHĨ" CỦA AI (CHỐNG BỊA ĐẶT)**
 - **ĐƯỢC TỰ NGHĨ:** Diễn giải nỗi đau, reframe góc nhìn qua nguyên lý tâm lý, vẽ viễn cảnh mong muốn (vì chúng có nền từ Hồ sơ).
-- **CẤM TỰ NGHĨ:** Số liệu, quote, "nghiên cứu cho thấy", câu chuyện cá nhân cụ thể của Hiền, phương pháp Hiền chưa dạy. (Mọi thứ này phải có sẵn trong WIKI hoặc được Hiền cấp).
+- **CẤM TỰ NGHĨ:** Số liệu, quote, "nghiên cứu cho thấy", câu chuyện cá nhân cụ thể của creator, phương pháp creator chưa dạy. (Mọi thứ này phải có sẵn trong WIKI hoặc được creator cấp).
 
 **5. CÔNG THỨC EEAT — CHỐNG "CHUNG CHUNG" (bài kể chuyện / bài dùng trải nghiệm thật)** *(anh Tuấn chốt 2026-07-02)*
 Lỗi hay mắc: bài nói tầng tư duy/reframe suông → khách "à hiểu rồi" nhưng KHÔNG biết mình đã làm gì và họ phải làm gì. Câu hỏi trung tâm của EEAT (IPS 16 Chiều N1): *"Mình đã vượt qua khó khăn nào, và giúp người khác vượt qua điều tương tự THẾ NÀO?"*
@@ -38,7 +38,7 @@ Bài EEAT/kể chuyện BẮT BUỘC đủ 2 vế (thay cho reframe chung chung)
 - **① MÌNH ĐÃ VƯỢT QUA THẾ NÀO — cụ thể:** rút từ `kho-cau-chuyen.md` (E-bank). Kể **việc THẬT mình đã LÀM** (hành động cụ thể: "mình đã bỏ X, làm Y, thử Z, mất bao lâu"). 🔴 CẤM nói chung chung ("mình đã thay đổi tư duy", "mình trưởng thành hơn", "mình nhận ra…") mà không có việc cụ thể. Thiếu chuyện thật khớp → `[cần thật: …]` báo chị bổ sung.
 - **② HƯỚNG DẪN BẠN VƯỢT QUA THẾ NÀO — bước cụ thể:** biến cách mình đã làm thành **1–3 bước bạn áp dụng được ngay**. CẤM dừng ở "hãy tin vào bản thân" / "hãy bắt đầu đi" — phải chỉ RA VIỆC.
 - 🔴 **TEST chống chung chung (bắt buộc tự soi trước khi trình):** đọc xong, khách trả lời được **"chủ thể đã LÀM GÌ để qua"** + **"mình cần LÀM GÌ"** chưa? Chỉ thấy "à hiểu rồi" mà không biết làm gì = CÒN CHUNG CHUNG → viết lại.
-- Khác "chốt hành động" thường: ở đây việc phải **NEO vào trải nghiệm thật của Hiền** (Experience — vế AI không bắt chước được), không phải mẹo chung ai nói cũng được.
+- Khác "chốt hành động" thường: ở đây việc phải **NEO vào trải nghiệm thật của creator** (Experience — vế AI không bắt chước được), không phải mẹo chung ai nói cũng được.
 
 **6. LUẬT HÀNH ĐỘNG — MỖI BÀI KHƠI KHÁCH MUỐN LÀM (tâm lý hành vi marketing)**
 Marketing giỏi không dừng ở "đọc xong thấy hay rồi thôi" — nó khơi cho khách **MUỐN HÀNH ĐỘNG**. Mỗi bài giúp khách thấy rõ:

@@ -57,7 +57,7 @@ async function run(queue, bound = true, inputContext = context, stageType = 'WRI
       const {prompt, options} = r.prompts[0]
       for (const text of ['SELECTED_OPENING_' + kind, 'SELECTED_ARGUMENT_' + kind, 'No forced axis',
                          'psychology or story treatment', 'independent Critic must read',
-                         'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET', 'OWNER-CONFIRMED V2 QUALITY', 'personal-story-first', 'Do not reuse it or merely', 'Keep the reader', 'Invite reflection']) assert(prompt.includes(text))
+                         'AUTHORITATIVE EXECUTION IDENTITY', 'IMMUTABLE PACKET', 'OWNER-CONFIRMED V2 QUALITY', 'personal-story-first', 'Do not disguise a meaningless contrast by paraphrasing it', 'Keep the reader', 'Invite reflection']) assert(prompt.includes(text))
       if (stageType === 'WRITER') {
         assert(prompt.includes('HUMAN-APPROVED INTERNAL CREATIVE PLAN'))
         assert(!prompt.includes('**' + String.fromCodePoint(110,103,104,7883,99,104,32,108,253) + '**'))

@@ -56,6 +56,28 @@ const WRITER_SCHEMA = {
   required: ['ten', 'file', 'ok'],
 }
 
+// Shared read-only creator context. No creator identity or preference defaults.
+// Included verbatim in batch-content.js. Paths originate in the operator manifest
+// (V2) or explicit legacy workspace input; this does not discover/read new files.
+function creatorContext(assets, legacyWorkspace = false) {
+  const list = Array.isArray(assets) ? assets : []
+  const names = new Set(['about-me.md', 'voice-profile.md', 'writing-rules.md',
+    'writing-rules-chi-tiet.md', 'kho-cta.md', 'kho-cau-chuyen.md'])
+  const selected = list.filter(a => a && typeof a.path === 'string' &&
+    names.has(a.path.replaceAll('\\', '/').split('/').at(-1)))
+  if (legacyWorkspace && !selected.length) return 'CREATOR CONTEXT — no explicit asset list. ' +
+    'Use only the creator already explicitly selected in the existing private workspace, following the existing brand checks. ' +
+    'Read its voice/preferences/CTA and sourced Story; do not infer a creator or substitute another workspace. ' +
+    'If no creator is selected or required context is missing, report missing context. No default creator name or voice.'
+  return 'CREATOR CONTEXT — use only explicitly supplied creator assets below. ' +
+    'Voice, preferred address, cadence, CTA and lived examples belong to this creator, never to shared Reelo. ' +
+    'Read the supplied voice/profile/preferences and keep their intended behavior for this creator. ' +
+    'Creator references do not establish customer truth. Use Story only with its approved classification and source. ' +
+    'No supplied creator value means no assumed name, CTA, life example or voice preference. ' +
+    'Report missing required context; never substitute another creator. No recursive discovery or additional permission.\n' +
+    JSON.stringify(selected)
+}
+
 const WRITER_PROMPT = (it, trucGoiY) => `Bạn là thợ viết content Reelo, viết ĐÚNG 1 bài rồi LƯU FILE. Làm việc trong không gian cách ly — KHÔNG in nháp ra ngoài, chỉ trả metadata.
 
 🎯 TRỤC GỢI Ý cho bài này (Orchestrator đã phân bổ để KHÔNG trùng trục với các bài khác trong CÙNG batch): **${trucGoiY}**. Ưu tiên viết theo trục này; chỉ đổi sang trục khác nếu nội dung thật sự không hợp + ghi lý do vào ghi_chu. (Vẫn soi _INDEX ở bước 3 để không trùng bài ĐÃ có trong sổ.)
@@ -70,7 +92,7 @@ QUY TRÌNH BẮT BUỘC (đọc file thật, KHÔNG làm tắt):
 1. Read \`.claude/skills/viet-script/SKILL.md\` + reference định dạng tương ứng trong \`.claude/skills/viet-script/references/\` hoặc \`engine/cong-thuc-viral/dinh-dang-dau-ra.md\`. Read \`engine/cong-thuc-viral/cong-kiem-chat-luong.md\` để tự rà trước.
 2. Read nguồn thật trong \`_private/kho-kien-thuc/wiki/\` — mở \`wiki/_INDEX.md\` tìm wiki hợp chủ đề, đừng đoán tên file. CHỐNG BỊA: mọi số/quote/case phải truy được về wiki/raw/kho-cau-chuyen; thiếu → [chưa có]. Kiến thức vay mượn của người khác dẫn dạng "mình nghe/học được", KHÔNG gán thành chuyện của chủ thể.
 3. Soi \`scripts-output/_INDEX.md\` chống lặp: trích nguyên văn TRỤC của 2 bài gần nhất, CHỌN TRỤC KHÁC (đừng lặp; ưu tiên trục đang thiếu: nghịch lý/hình ảnh cụ thể/ẩn dụ). Né các góc đã viết.
-4. Voice Hiền (reel/bài viết bắt buộc): xưng "mình" gọi "bạn", điềm tĩnh, THẤU không phán, kết bằng câu hỏi tự soi. Carousel KHÔNG bắt voice Hiền nhưng phải tiếng Việt tự nhiên + how-to áp dụng được.
+4. Giữ voice, xưng hô, nhịp và CTA từ nguồn creator được chọn rõ ở workspace hoặc creator_assets; đọc voice-profile/writing-rules/kho-cta của đúng creator theo quy trình brand hiện có. Không lấy giọng hay chuyện của creator khác làm mặc định. Carousel không bắt giọng riêng nhưng vẫn phải tiếng Việt tự nhiên + how-to áp dụng được.
 5. Đủ số chữ theo định dạng (Reel 170–220 · Bài ngắn 200–400 · Bài dài 400–800 · Carousel 5–8 slide). ĐẾM CHỮ THẬT, đừng ước.
 6. Header file phải có 3 dòng bằng chứng cho Critic: Reference đã mở · GATE 5 câu · số chữ đếm thật; + bảng ≥8 hook (trừ Carousel) + trích nguyên văn _INDEX 2 bài.
 6B. 🔴 BẢNG TIÊU ĐỀ — BẮT BUỘC, KHÔNG ĐƯỢC BỎ. Batch không có người duyệt đứng cạnh, nên đây là cổng DUY NHẤT gác tiêu đề.
@@ -102,14 +124,14 @@ const FIX_PROMPT = (file, loi) => `Sửa bản nháp tại \`${file}\` theo các
 async function writeOne(rawItem, idx) {
   const it = norm(rawItem)
   const trucGoiY = it.truc || TRUC_POOL[idx % TRUC_POOL.length]
-  const draft = await agent(WRITER_PROMPT(it, trucGoiY), { label: `viết:${it.chu_de || 'bài'}`, phase: 'Viết', schema: WRITER_SCHEMA })
+  const draft = await agent(creatorContext(it.creator_assets, true) + '\n' + WRITER_PROMPT(it, trucGoiY), { label: `viết:${it.chu_de || 'bài'}`, phase: 'Viết', schema: WRITER_SCHEMA })
   if (!draft || !draft.ok || !draft.file) {
     return { ten: it.chu_de || '(?)', dinh_dang: it.dinh_dang || '—', truc: '—', critic: '❌ không viết được', file: (draft && draft.ghi_chu) || '—' }
   }
-  let verdict = await agent(CRITIC_PROMPT(draft.file, draft.dinh_dang), { agentType: 'critic-ban-giam-khao', label: `chấm:${draft.ten}`, phase: 'Chấm', schema: VERDICT_SCHEMA })
+  let verdict = await agent(creatorContext(it.creator_assets, true) + '\n' + CRITIC_PROMPT(draft.file, draft.dinh_dang), { agentType: 'critic-ban-giam-khao', label: `chấm:${draft.ten}`, phase: 'Chấm', schema: VERDICT_SCHEMA })
   if (verdict && verdict.verdict === 'CẦN SỬA') {
-    await agent(FIX_PROMPT(draft.file, verdict.loi), { label: `sửa:${draft.ten}`, phase: 'Sửa' })
-    verdict = await agent(CRITIC_PROMPT(draft.file, draft.dinh_dang), { agentType: 'critic-ban-giam-khao', label: `chấm2:${draft.ten}`, phase: 'Chấm', schema: VERDICT_SCHEMA })
+    await agent(creatorContext(it.creator_assets, true) + '\n' + FIX_PROMPT(draft.file, verdict.loi), { label: `sửa:${draft.ten}`, phase: 'Sửa' })
+    verdict = await agent(creatorContext(it.creator_assets, true) + '\n' + CRITIC_PROMPT(draft.file, draft.dinh_dang), { agentType: 'critic-ban-giam-khao', label: `chấm2:${draft.ten}`, phase: 'Chấm', schema: VERDICT_SCHEMA })
   }
   const status = verdict ? (verdict.verdict === 'ĐẠT' ? `✅ ĐẠT${verdict.do_tuoi ? ' ' + verdict.do_tuoi : ''}` : '❌ CẦN SỬA (còn lỗi sau 1 vòng)') : '⚠️ Critic lỗi'
   // Batch mất khâu "trình người duyệt chốt tiêu đề" của SKILL.md → thay bằng cờ để Main biết đường trình trước khi ghi _INDEX/đẩy Notion.
@@ -153,10 +175,10 @@ async function writeV2() {
   const refs = [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)]
   const constraints = `V2 takes precedence over conflicting legacy source/psychology/profile rules.
     Creator truth is a separate boundary: external knowledge attributed to an author is not
-    evidence that the creator learned it, lived it or met that author. Never turn "Brian Tracy
-    says X" into "I learned X from Brian Tracy" without explicit creator evidence. Customer
+    evidence that the creator learned it, lived it or met that author. Never turn an attributed
+    author's claim into first-person learning without explicit creator evidence. Customer
     evidence is not creator experience; illustrations are not factual personal history.
-    Preserve context scope: "rent" alone does not establish business premises, and distinct
+    Preserve context scope: a named expense alone does not establish its setting, and distinct
     evidence items do not establish the same situation. Retain unknown context. Translate
     quotes only as explicitly labeled translations/paraphrases, never fake literal wording.
     Creative examples remain clearly hypothetical, not customer causality or market proof.
@@ -190,17 +212,17 @@ async function writeV2() {
     Return the structured draft once the necessary checks are complete; no full-vault audit.
     Use only the read files provided. Do not guess private source paths. Missing required creative
     references must be reported. A synthetic fixture is not a real customer endorsement.`
-  const ownerQuality = `OWNER-CONFIRMED V2 QUALITY (Anh Tuan, C5.6):
-    Keep the reader (ban / bạn) the center of gravity. Creator voice (minh / mình, toi / tôi,
-    Hien / Hiền) is welcome for a useful real story, lived credibility or brief observation;
+  const ownerQuality = `OWNER-CONFIRMED V2 QUALITY:
+    Keep the reader (ban / bạn) the center of gravity. The configured creator's first-person
+    voice is welcome for a useful real story, lived credibility or brief observation;
     then return attention to the reader. Do not make reader-centered decision support a creator
     monologue. More creator voice is legitimate only when the selected intent/format is explicitly
     personal-story-first, not a label invented to bypass this requirement. Do not count pronouns.
     A title must make semantic sense immediately, relate directly to the selected problem/angle,
     use natural Vietnamese and offer useful curiosity/tension to the reader. Do not rely on
     awkward poetic contrast, meaningless opposition or AI-style wordplay for its own sake.
-    Owner rejected "Tiền thuê nặng, hay phần giữ lại đang mỏng?". Do not reuse it or merely
-    paraphrase it; choose a meaningfully clear title from the selected problem, not this word game.
+    Do not disguise a meaningless contrast by paraphrasing it; choose a meaningfully clear
+    title from the selected problem. Clarity matters more than clever wording.
     Invite reflection rather than lecture, diagnose or impose conclusions. Questions, suggestions,
     tentative possibilities and real creator experience offered as one lens are welcome.
     Do not tell readers what their real problem is without evidence, prescribe what they should
@@ -208,7 +230,7 @@ async function writeV2() {
     Keep natural Vietnamese and psychological resonance; do not add emotion just for intensity.
     All truth guards still apply: reader-centered address is not permission to invent reader facts,
     and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
-  let shared = constraints + '\n' + ownerQuality + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
+  let shared = constraints + '\n' + ownerQuality + '\n' + creatorContext(assets) + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
   const approved = V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
   if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +

@@ -1,5 +1,7 @@
 # V2 Content Intelligence consumer
 
+RP3.B creator isolation: [creator boundary and configuration](CREATOR-BOUNDARY-B1.md).
+
 RP3.A maintenance authority: [canonical semantics and parity](SEMANTICS-A1.md).
 Read before changing mode, V2 title or Critic severity/repair meanings. This does
 not reopen C5 or authorize creative execution.

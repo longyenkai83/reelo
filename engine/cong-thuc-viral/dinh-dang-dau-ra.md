@@ -12,14 +12,14 @@ Hệ thống xuất content **video** (Reel · Video dài) + **carousel** (slide
 ## 2. VIDEO DÀI THẬT  ← video YouTube đầy đủ (kịch bản 6 bước)
 - **>8 phút (>1000 chữ thoại).** Theo **kịch bản 6 bước** (`references/video-dai-khung-kich-ban.md`): Hook 15s → Bạn là ai → Nỗi đau & Sung sướng (+ chuyện cá nhân) → Chiến lược & Hành động (phần dài nhất) → CTA.
 - Lồng **câu chuyện 7 bước** + đo bằng **D×V×F×S > ER**. Tiêu đề theo giai đoạn phễu (`video-dai-28-ngay.md`).
-- 🔒 **BÁM GỐC nội dung (khi lấy từ video nguồn đã nhiều view):** GIỮ NGUYÊN **ý chính · luận điểm · thứ tự · cơ chế** của video gốc — **KHÔNG tự chế / thêm / bớt ý**, **KHÔNG tự suy "câu lõi"** (khác Reel). Chỉ **ĐỔ ý gốc vào khung 6 bước** + **Việt hóa + voice Hiền**. Cái thắng là nội dung gốc → **đừng chế biến**. *(Khung + tiêu đề + giọng = của mình; nội dung = bám gốc.)*
+- 🔒 **BÁM GỐC nội dung (khi lấy từ video nguồn đã nhiều view):** GIỮ NGUYÊN **ý chính · luận điểm · thứ tự · cơ chế** của video gốc — **KHÔNG tự chế / thêm / bớt ý**, **KHÔNG tự suy "câu lõi"** (khác Reel). Chỉ **ĐỔ ý gốc vào khung 6 bước** + **Việt hóa + voice creator được chọn**. Cái thắng là nội dung gốc → **đừng chế biến**. *(Khung + tiêu đề + giọng = của mình; nội dung = bám gốc.)*
 - ⚠️ Theo **kịch bản 6 bước**, **KHÔNG dùng 17 format** (17 format dành cho Reel).
 - ⚠️ **KHÔNG áp luật "cô đọng"** (ngắn gọn như Reel) — định dạng này cần CHIỀU SÂU, đầy đủ. Cô đọng chỉ áp cho Reel.
 - Dùng cho: YouTube chính (chiều sâu, xây uy tín, bán hàng).
 
 ## 3. CAROUSEL  ← slide IG/Facebook (từ nguồn dài → slide cô đọng)
 - **5–8 slide.** Slide 1 HOOK (dừng vuốt) → slide 2–6 mỗi slide 1 ý (~40–60 từ) → slide cuối CTA. Chi tiết: **`references/format-carousel.md`**.
-- Style **tweet**, xưng "bạn", giọng Hiền **ngắn**; in đậm dòng chính; danh sách dùng → .
+- Style **tweet**, xưng "bạn", giọng creator được chọn **ngắn**; in đậm dòng chính; danh sách dùng → .
 - ⚠️ **KHÔNG dùng 17 format / 6 bước** (đó cho video). ⚠️ **Chống bịa:** quote/số trên slide CHỈ dùng cái CÓ THẬT (wiki), ghi nguồn.
 - Dùng cho: Instagram/Facebook — trích quote/insight, dễ lưu + lan.
 

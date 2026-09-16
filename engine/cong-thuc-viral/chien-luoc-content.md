@@ -76,7 +76,7 @@
 | 1 | **Unaware** (Chưa nhận biết) | Chưa biết mình có vấn đề | Chưa nhận thức | Khơi "ủa hình như mình vậy" — chạm đời sống/cảm xúc. CHƯA bán. |
 | 2 | **Problem-Aware** (Biết vấn đề) | Biết mình kẹt, chưa rõ vì sao / chưa biết có cách | Nhận thức vấn đề | Gọi tên + đào nguyên nhân/sai lầm. Hé lộ "có cách". |
 | 3 | **Solution-Aware** (Biết có giải pháp) | Biết có loại giải pháp, chưa biết của ai | Nuôi dưỡng (đầu) | Cho thấy CÁCH/phương pháp + vì sao nó đúng. Dạy. |
-| 4 | **Product-Aware** (Biết Hiền/sản phẩm) | Biết Hiền giải được, chưa chắc chọn | Nuôi dưỡng (giữa) | Chứng minh Hiền giải được + đáng tin (proof). |
+| 4 | **Product-Aware** (Biết creator/sản phẩm) | Biết creator giải được, chưa chắc chọn | Nuôi dưỡng (giữa) | Chứng minh creator giải được + đáng tin (proof). |
 | 5 | **Most-Aware** (Sẵn sàng) | Tin rồi, chỉ cần lý do/offer để chốt | Nuôi dưỡng (cuối) | Offer rõ + cú hích THẬT (không FOMO). Chốt. |
 
 ### 🔗 BẢNG MAP XUYÊN TRỤC (hợp nhất — để 5 trục ăn khớp, không loạn)

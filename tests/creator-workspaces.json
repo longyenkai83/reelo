@@ -1,0 +1,18 @@
+[
+  {
+    "id": "hien-synthetic",
+    "name": "Hiền",
+    "voice": "SYNTHETIC: mình/bạn; điềm tĩnh; thấu không phán.",
+    "cta": "SYNTHETIC: câu hỏi tự soi; lời mời nhẹ.",
+    "writing": "SYNTHETIC: câu ngắn có điểm rơi; ít dấu chấm than.",
+    "story": "SYNTHETIC STORY A — only when explicitly selected; no real creator history."
+  },
+  {
+    "id": "creator-b",
+    "name": "Minh An",
+    "voice": "SYNTHETIC: tôi/bạn; trực tiếp, thực tế, giải thích rõ.",
+    "cta": "SYNTHETIC: tải bảng kiểm; không mời bình luận.",
+    "writing": "SYNTHETIC: đoạn lập luận có ví dụ kỹ thuật; không cadence tự sự.",
+    "story": "SYNTHETIC STORY B — assembling a model bridge; no real creator history."
+  }
+]

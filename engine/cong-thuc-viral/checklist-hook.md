@@ -50,8 +50,8 @@
 ### Bộ "LỖI CHẶN NGAY" cho video/reel — dính là sửa trước khi xuất
 1. **Mở bằng chào hỏi / giới thiệu bản thân** — 5 giây vàng bị đốt vào thứ người xem chưa quan tâm → lướt ngay. Chữa: cắt hết, đẩy câu đắt nhất lên câu 1; muốn giới thiệu thì để sau 15s, gói trong 1 câu.
 2. **15s đầu lan man chưa vào việc** — người xem chưa thấy "video này cho MÌNH cái gì" thì không có lý do ở lại. Chữa: ép mở bài vào khuôn 5+5+5, mỗi khối trả lời 1 câu: sốc gì · tin vì đâu · được gì.
-3. **Bán trước khi người xem đủ ấm** — nhắc sản phẩm/mời mua khi họ chưa tin, chưa nhận giá trị → mất cả người lẽ ra sẽ theo dõi. Chữa: cho giá trị trọn vẹn trước; phần mời chỉ nằm cuối, và với voice Hiền là lời mời nhẹ, không hối thúc.
-4. **Thiếu lời mời cuối** — hết video người xem không biết làm gì tiếp → cảm xúc tắt, không chuyển đổi. Chữa: chốt bằng 1 hành động cụ thể hợp voice Hiền (câu hỏi mở mời kể chuyện mình / theo dõi để xem phần sau) — không dùng "like nếu đồng ý".
+3. **Bán trước khi người xem đủ ấm** — nhắc sản phẩm/mời mua khi họ chưa tin, chưa nhận giá trị → mất cả người lẽ ra sẽ theo dõi. Chữa: cho giá trị trọn vẹn trước; phần mời chỉ nằm cuối, với cách mời theo CTA preferences của creator được chọn.
+4. **Thiếu lời mời cuối** — hết video người xem không biết làm gì tiếp → cảm xúc tắt, không chuyển đổi. Chữa: chốt bằng 1 hành động cụ thể hợp voice/CTA preferences của creator được chọn; không mặc định CTA của một brand.
 
 ## 7. QUY TRÌNH LỌC (Bước 3.6 của skill)
 1. Gạch ngay hook dính **lỗi giết hook** (mục 3) hoặc rớt **bắt buộc** (mục 1).
