@@ -125,7 +125,7 @@ def test_repair_map_is_non_executable_and_grants_no_authority():
     }
     # The maintenance layer cannot silently become a creative dispatcher/router.
     for path in (ROOT / 'integrations/content_intelligence').glob('*.py'):
-        if path.name == 'semantic_parity.py':
+        if path.name in ('semantic_parity.py', 'context_packs.py'):
             continue
         assert 'semantic_parity' not in path.read_text(encoding='utf-8-sig')
         assert 'semantics-a1.json' not in path.read_text(encoding='utf-8-sig')

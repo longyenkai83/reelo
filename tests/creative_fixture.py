@@ -13,7 +13,7 @@ def proposal(packet, library):
         angle_id=packet['content_strategy']['angle']['angle_id'], truth_type='PROPOSED', story_matches=[], knowledge_matches=[],
         illustrations=[], psychology=dict(primary_mechanism='Synthetic mechanism', optional_secondary_mechanism=None,
             library_source=library.as_posix(), rationale='SYNTHETIC mechanism, no hidden motive'),
-        format='Reel', treatment_or_truc='Selected direction',
+        content_job='TEACH', recipe_id='c1:TEACH', format='Reel', treatment_or_truc='Selected direction',
         hook_candidates=[candidate('h1','SYNTHETIC draft'),candidate('h2','SYNTHETIC alternative')],
         title_candidates=[candidate('t1','Synthetic'),candidate('t2','Synthetic alternative')],
         recommended_hook_id='h1', recommended_title_id='t1', outline=['SYNTHETIC outline'],
@@ -25,7 +25,8 @@ def proposal(packet, library):
 
 def approved_fixture(packet, path):
     library=path/'nguyen-ly-tam-ly.md'; library.write_text('Synthetic mechanism',encoding='utf8')
-    assets=[dict(path=library.as_posix(),sha256=hashlib.sha256(library.read_bytes()).hexdigest())]
+    from integrations.content_intelligence.context_packs import manifest, ROOT
+    assets=manifest([library], ROOT)
     context=dict(schema_version='reelo.execution-context.1',packet=packet)
     store=PlanStore(path/'creative-plans.sqlite')
     plan=store.save(proposal(packet,library),context,assets,'SYNTHETIC-PLANNER')

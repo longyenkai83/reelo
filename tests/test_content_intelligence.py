@@ -182,7 +182,7 @@ def test_effort_override_is_session_local_and_keeps_safety(packet, tmp_path, mon
     workspace = tmp_path/'workspace'
     script = workspace/'.claude/workflows/batch-content.js'
     script.parent.mkdir(parents=True)
-    script.write_text('export const meta = {};\n/* V2_BOUND_CONTEXT */')
+    script.write_text('export const meta = {};\n// D1 STAGE CONTEXT PACK\n/* V2_BOUND_CONTEXT */')
     monkeypatch.setattr(HostConfig, 'verify', lambda self: None)
     seen = []
     def stop_at_launch(argv, **kw):
@@ -193,7 +193,9 @@ def test_effort_override_is_session_local_and_keeps_safety(packet, tmp_path, mon
     receipt = store.intake(packet)
     execution, _ = store.reserve(receipt, 'test')
     config = HostConfig(executable=tmp_path/'claude.exe', execution_workspace=workspace,
-                        state_directory=tmp_path/'runs', effort_level=effort)
+                        state_directory=tmp_path/'runs', effort_level=effort,
+                        read_files=(tmp_path/'voice-profile.md',))
+    config.read_files[0].write_text('SYNTHETIC voice')
     result = NativeHost(config)(execution, store.context(receipt))
     assert result.status == 'UNKNOWN'
     settings = json.loads(seen[seen.index('--settings')+1])
@@ -241,7 +243,7 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
     workspace = tmp_path/'workspace'
     template = workspace/'.claude/workflows/batch-content.js'
     template.parent.mkdir(parents=True)
-    template.write_text('export const meta = {};\n/* V2_BOUND_CONTEXT */')
+    template.write_text('export const meta = {};\n// D1 STAGE CONTEXT PACK\n/* V2_BOUND_CONTEXT */')
     monkeypatch.setattr(HostConfig, 'verify', lambda self: None)
     monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path/'home'))
     monkeypatch.setenv('TEMP', str(tmp_path))
@@ -265,6 +267,9 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
     if case == 'not_terminal': body['output']['status'] = 'RUNNING'
     out.write_text('bad json' if case == 'malformed' else json.dumps({'result':body}), encoding='utf8')
     cfg = HostConfig(executable=tmp_path/'claude.exe',execution_workspace=workspace,state_directory=tmp_path/'runs')
+    voice = tmp_path/'voice-profile.md'; voice.write_text('SYNTHETIC voice')
+    from integrations.content_intelligence.context_packs import manifest, ROOT as knowledge_root
+    assets = manifest([voice], knowledge_root)
     work = cfg.state_directory/execution.generation_id/'WRITER'
     work.mkdir(parents=True)
     script = work/'batch-content.js'
@@ -299,7 +304,7 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
         return Process()
     monkeypatch.setattr(subprocess,'Popen',launch)
     if case == 'exact':
-        result, host = NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, [])
+        result, host = NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, assets)
         assert result == body and result['stage']['ingestion_id'] == receipt.ingestion_id
         assert len(host['permission_notes']) == 1
         assert host['permission_notes'][0]['code'] == 'redundant_post_terminal_output_read_denied'
@@ -307,7 +312,7 @@ def test_c53_permission_boundary_after_independent_validation(packet, tmp_path, 
         allowed = captured[captured.index('--allowedTools')+1:captured.index('--permission-mode')]
         assert allowed == ['Workflow', 'Read('+script.as_posix()+')']
     else:
-        with pytest.raises(ValueError): NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, [])
+        with pytest.raises(ValueError): NativeHost(cfg).invoke_stage(execution, context, stage, {}, work, assets)
         assert not (work/'validated-host-result.json').exists()
         assert not (work/'permission-review.json').exists()
     assert store.context(receipt) == context

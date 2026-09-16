@@ -10,6 +10,7 @@ from pathlib import Path
 from .adapter import ExecutionResult, encoded
 from .contract import value_hash
 from .stages import execute_stages, validate_envelope
+from .context_packs import assemble, manifest, ROOT as KNOWLEDGE_ROOT
 
 
 @dataclass(frozen=True)
@@ -155,8 +156,7 @@ class NativeHost:
             raise ValueError('context_hash_mismatch')
         work = config.state_directory.resolve()/execution.generation_id
         work.mkdir(parents=True, exist_ok=False)
-        assets = [{'path': p.as_posix(), 'sha256': __import__('hashlib').sha256(p.read_bytes()).hexdigest()}
-                  for p in config.read_files]
+        assets = manifest(config.read_files, KNOWLEDGE_ROOT)
         from .creative_plan import PlanStore
         from .planning import execute_plan
         plans = PlanStore(config.state_directory.parent/'creative-plans.sqlite')
@@ -175,9 +175,33 @@ class NativeHost:
         template = (config.execution_workspace/'.claude/workflows/batch-content.js').read_text(encoding='utf-8')
         if '/* V2_BOUND_CONTEXT */' not in template:
             raise ValueError('v2_workflow_not_installed')
+        if 'D1 STAGE CONTEXT PACK' not in template:
+            raise ValueError('d1_context_workflow_not_installed')
         identity = dict(receipt=execution.receipt.model_dump(mode='json'),
                         generation_id=execution.generation_id, parent_generation_id=execution.parent_generation_id)
-        binding = {'execution': identity, 'context': context, 'assets': assets, 'stage': stage, 'inputs': inputs}
+        policy_files = [a for a in assets if Path(a['path']).name == 'context-selection.json']
+        if len(policy_files) > 1: raise ValueError('ambiguous_context_selection')
+        policy = []
+        if policy_files:
+            selected_policy = policy_files[0]
+            raw_policy = Path(selected_policy['path']).read_bytes()
+            if __import__('hashlib').sha256(raw_policy).hexdigest() != selected_policy['sha256']:
+                raise ValueError('context_selection_changed')
+            policy = json.loads(raw_policy)
+        try:
+            pack, trace = assemble(stage['stage_type'], inputs, assets, policy)
+        except ValueError as exc:
+            if hasattr(exc, 'trace'):
+                (work/'context-trace.json').write_text(encoded(exc.trace), encoding='utf8')
+            raise
+        (work/'context-trace.json').write_text(encoded(trace), encoding='utf8')
+        if pack['missing_context']:
+            raise ValueError('creator_voice_context_required')
+        selected_ids = {r['asset_id'] for r in trace['receipts'] if 'SELECTED' in r['states']}
+        from .context_packs import asset_id
+        stage_assets = [a for a in assets if asset_id(a['path']) in selected_ids]
+        binding = {'execution': identity, 'context': context, 'assets': stage_assets, 'stage': stage,
+                   'inputs': inputs, 'context_pack': pack}
         # Adapter embeds validated immutable data; model-supplied args never supply authority.
         script_text = template.replace('/* V2_BOUND_CONTEXT */',
             'const V2_BOUND = JSON.parse('+json.dumps(encoded(binding), ensure_ascii=False)+');')
@@ -200,7 +224,7 @@ class NativeHost:
                 '--no-session-persistence', '--setting-sources', 'user,project,local',
                 '--settings', json.dumps(settings), '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
                 '--tools', 'Workflow,Read', '--allowedTools', 'Workflow',
-                'Read('+script.as_posix()+')', *['Read('+p.as_posix()+')' for p in config.read_files],
+                'Read('+script.as_posix()+')',
                 '--permission-mode', 'dontAsk', '--max-budget-usd', str(config.max_budget_usd),
                 '--system-prompt',
                 'Execute the exact trusted Workflow script once and wait for terminal notification. '
@@ -213,6 +237,8 @@ class NativeHost:
                 '\nWait for its actual terminal notification. Do not fabricate a result.']
         child = subprocess.Popen(argv, cwd=config.execution_workspace,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8')
+        trace['delivery'] = 'SUBMITTED_TO_NATIVE_HOST; model comprehension UNKNOWN'
+        (work/'context-trace.json').write_text(encoded(trace), encoding='utf8')
         try:
             stdout, stderr = child.communicate(timeout=config.timeout_seconds)
         except subprocess.TimeoutExpired:
@@ -257,6 +283,7 @@ class NativeHost:
         host = dict(correlation, executable=str(config.executable), version=config.version,
                     cwd=str(config.execution_workspace), profile='read-only-controlled-cli',
                     script_hash=value_hash(script_text), assets=assets,
+                    context_pack_hash=trace['payload_hash'], context_trace=trace,
                     requested_effort_level=config.effort_level or 'inherited',
                     permission_notes=permission_notes,
                     session_ids=list(dict.fromkeys(e['session_id'] for e in events if e.get('session_id'))))

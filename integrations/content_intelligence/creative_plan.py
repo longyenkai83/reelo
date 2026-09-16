@@ -47,8 +47,9 @@ class Candidate(Model):
 class Psychology(Model):
     primary_mechanism: str
     optional_secondary_mechanism: str | None
-    library_source: str
+    library_source: str = ''  # D1 resolves an ID to the pinned exact path.
     rationale: str
+    reference_id: str | None = None
 
 
 class Illustration(Model):
@@ -68,6 +69,8 @@ class NarrativePayoff(Model):
 
 
 class PlanProposal(Model):
+    content_job: str | None = None  # Historical plans retain absent fields.
+    recipe_id: str | None = None
     packet_id: str
     verified_insight_id: str
     angle_id: str
@@ -127,6 +130,19 @@ def source_role(path):
 
 def validate_proposal(raw, context, assets):
     p = PlanProposal.model_validate(raw).model_dump()
+    from .context_packs import validate_recipe, asset_id
+    if p['content_job'] is not None or p['recipe_id'] is not None:
+        validate_recipe(p['content_job'], p['recipe_id'])
+    for key in ('content_job', 'recipe_id'):
+        if key not in raw: p.pop(key)
+    reference = p['psychology'].get('reference_id')
+    if reference:
+        found = [a for a in assets if asset_id(a['path']) == reference]
+        if len(found) != 1 or (p['psychology']['library_source'] and
+                             Path(p['psychology']['library_source']).as_posix() != found[0]['path']):
+            raise ValueError('psychology_reference_identity_mismatch')
+        p['psychology']['library_source'] = found[0]['path']
+    if 'reference_id' not in raw['psychology']: p['psychology'].pop('reference_id')
     packet = context['packet']
     vi = packet['customer_truth']['verified_insight']
     if (p['packet_id'] != packet['packet_id'] or p['angle_id'] != packet['content_strategy']['angle']['angle_id']

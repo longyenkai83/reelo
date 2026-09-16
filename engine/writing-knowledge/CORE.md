@@ -1,5 +1,9 @@
 # Writing Knowledge C1 — cơ chế trước, mẫu tham khảo sau
 
+D1 runtime integration hiện được mô tả tại [Context Packs](../../integrations/content_intelligence/CONTEXT-PACKS-D1.md).
+Các ghi chú “chưa nối runtime” bên dưới mô tả phạm vi C1 gốc; D1 đã project các
+section được chọn vào từng stage, vẫn giữ psychology/title-eight compatibility.
+
 Canonical knowledge authority cho RP3.C, dựa trên quyết định Owner trong prompt C1.
 Đây là mô hình kiến thức, chưa phải migration runtime. Không tự cấp quyền viết.
 Recipe data chuẩn ở [recipes.json](recipes.json); bản đồ tài sản và ngoại lệ chuyển tiếp

@@ -2,8 +2,9 @@
 
 RP3.C knowledge authority: [Writing Core, jobs and mechanisms](../../engine/writing-knowledge/CORE.md)
 and [asset dispositions](../../engine/writing-knowledge/ASSET-MAP.md).
-Knowledge model only: existing runtime psychology/title guards and read_files
-remain unchanged. Do not treat optional reference as permission to bypass them.
+D1 runtime integration: [stage context packs and operator selection](CONTEXT-PACKS-D1.md).
+Canonical projections now reach stages; runtime psychology/title guards remain.
+Historical approvals are not upgraded. Do not treat optional reference as permission to bypass guards.
 
 RP3.B creator isolation: [creator boundary and configuration](CREATOR-BOUNDARY-B1.md).
 
@@ -29,6 +30,10 @@ The Insight operator owns a local JSON config with four required keys:
 ```
 
 Optional operator limits: `timeout_seconds` (default 600, maximum 3600) and `max_budget_usd` (default 5).
+D1 treats `read_files` as an allowed inventory, not an instruction to load every
+file. Optional `context-selection.json` in that inventory selects task references;
+see the D1 runbook. Canonical knowledge files are pinned automatically in new
+plan manifests. Existing approvals cannot silently inherit them.
 Optional `effort_level` (`low`, `medium`, `high`) overrides reasoning effort for this
 one host session through native settings. Omit it to keep the inherited user setting.
 It never edits user/project settings, changes model, removes guards or grants tools.

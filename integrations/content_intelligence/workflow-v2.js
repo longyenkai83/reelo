@@ -2,6 +2,7 @@
 // V2_BOUND is injected only by the deterministic pre-host adapter, never from args.
 async function writeV2() {
   const { execution, context, assets } = V2_BOUND
+  const pack = V2_BOUND.context_pack
   function freeze(value) {
     if (value && typeof value === 'object') {
       Object.values(value).forEach(freeze)
@@ -77,7 +78,13 @@ async function writeV2() {
     and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
   let shared = constraints + '\n' + ownerQuality + '\n' + creatorContext(assets) + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
-  const approved = V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
+  const approved = pack ? pack.approved_plan : V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
+  if (pack) shared += '\nD1 STAGE CONTEXT PACK (verified adapter-loaded excerpts, not model self-report):\n' + JSON.stringify(pack) +
+    '\nD1 context override: required source support is supplied inline from independently verified reads for this stage. ' +
+    'Do not read full libraries/vaults or recursively follow metadata paths. Available metadata is not selected/read support. ' +
+    'Report missing support rather than claiming unseen sources were read. Canonical knowledge replaces legacy recipe mandates, never truth/approval/title-eight guards. ' +
+    'No source-file Read permission is granted; independently assess the supplied source excerpts against the draft. '
+  if (pack && pack.missing_context.length) shared += '\nRequired context missing: ' + JSON.stringify(pack.missing_context) + '. Report this as blocking; do not certify voice or drafting readiness.'
   if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +
     '\nExecute this plan, do not re-plan. Selected hook/title are exact approved wording; use them unchanged. ' +
     'Keep selected psychology, treatment, format, Story/Knowledge sources and outline sequence. ' +
@@ -136,7 +143,7 @@ async function writeV2() {
     required: ['plan_fidelity', 'title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
   const criticize = draft => agent(shared + '\n' +
-    CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format) +
+    (pack ? 'Independent Critic: apply canonical eight title meanings, truth guards and approved plan; report typed defects.' : CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format)) +
     '\nV2 override: read draft below, not a file. Independently check every customer assertion against A, '
     + 'selected intent against B, eight title criteria, and every external disposition. Never trust writer self-certification. '
     + 'V2 terminal semantics override legacy verdict: PASS means zero blocking_issues, REVISE means blockers remain. '
@@ -186,6 +193,7 @@ async function writeV2() {
       'Use exact allowed source_ref paths and SHA256, sections, why_relevant and allowed_use. Respect supplied asset roles: ' +
       'external knowledge cannot become creator story, customer evidence cannot become creator history. Story match_type is DIRECT only for supported same creator experience, ADJACENT for a distinct illuminating experience. Provide exact support_quote locally from that source, same_situation_supported and use_as_same_situation. ADJACENT must have precise allowed_use and must never imply the same customer experience. No story_matches means NONE; use illustrations with origin illustrative_ai and explicit disclosure for ILLUSTRATIVE_AI. ' +
       'Use mechanism names from the provided nguyen-ly-tam-ly library, choose communication mechanism not hidden customer motive. ' +
+      (pack ? 'D1: Choose content_job from the canonical catalog and recipe_id exactly c1:<CONTENT_JOB>. Use psychology.reference_id from the selected stable asset_id, library_source exact path; put commentary only in rationale. Sources listed only as available metadata are not read support and cannot be selected as verified Story/Knowledge. ' : '') +
       'Use existing format, treatment, hook and title libraries. Defaults: at least 8 hook candidates and 3-5 titles, ' +
       'shortlist/recommend one of each; these are craft defaults, not permanent product constants. ' +
       'Candidates refer to existing evidence IDs where factual content applies; proposed expression is not customer truth. ' +
@@ -196,7 +204,7 @@ async function writeV2() {
       'No forced axis; do not replace B opening or argument. Retain unknown author count/context and contradictions. ' +
       'Truth types remain unchanged; origins are provenance labels. Use packet/insight/angle IDs exactly. ' +
       'Except the local support_quote evidence field, use metadata and concise permitted use, not private passages. Redact support_quote in shared reports.\n' +
-      JSON.stringify(V2_BOUND.inputs.asset_roles),
+      JSON.stringify(pack ? pack.available_for_matching : V2_BOUND.inputs.asset_roles),
       {label: 'V2: creative planner', phase: 'Viết', schema: V2_BOUND.inputs.plan_schema})
   } else if (stage.stage_type === 'WRITER') {
     if (!approved || approved.decision !== 'approved') throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
@@ -207,7 +215,7 @@ async function writeV2() {
   } else if (stage.stage_type === 'REWRITE') {
     output = await agent(shared + '\nRevise once using the existing Reelo writing craft. '
       + 'Preserve A/B and fix every blocking issue. Notes are informational, not a reason to rewrite. Return a new structured version, never overwrite its parent.\n'
-      + JSON.stringify(V2_BOUND.inputs),
+      + JSON.stringify(pack ? {draft: V2_BOUND.inputs.draft, critic: V2_BOUND.inputs.critic, allowed_repair: pack.repair_constraint} : V2_BOUND.inputs),
     { label: 'V2: bounded rewrite', phase: 'Sửa', schema: writerSchema })
   } else {
     output = await criticize(V2_BOUND.inputs.draft)

@@ -96,11 +96,7 @@ def test_all_seventeen_formats_have_explicit_dispositions():
             'KEEP AS RECIPE', 'MERGE INTO RECIPE', 'MOVE TO REFERENCE', 'LEGACY ONLY'))
 
 
-def test_knowledge_model_not_loaded_by_existing_runtime():
-    paths = list((ROOT / 'integrations/content_intelligence').glob('*.py'))
-    paths += [ROOT / 'integrations/content_intelligence/workflow-v2.js',
-              ROOT / '.claude/workflows/batch-content.js']
-    for path in paths:
-        source = path.read_text(encoding='utf-8-sig')
-        assert 'writing-knowledge' not in source
-        assert 'recipes.json' not in source
+def test_knowledge_model_runtime_entry_is_explicit_d1_projection():
+    source = (ROOT / 'integrations/content_intelligence/host.py').read_text(encoding='utf8')
+    assert 'from .context_packs import assemble' in source
+    assert "'context_pack': pack" in source
