@@ -116,7 +116,8 @@ class IntakeStore:
             raise ValueError('receipt_packet_mismatch')
         return context
 
-    def reserve(self, receipt: Receipt, request_id: str, parent_id: str | None = None):
+    def reserve(self, receipt: Receipt, request_id: str, parent_id: str | None = None, *,
+                reconciliation_id=None, approval_id=None, authorize_current=None):
         if not request_id or len(request_id) > 120:
             raise ValueError('invalid_request_id')
         self.context(receipt)
@@ -136,7 +137,11 @@ class IntakeStore:
             if previous:
                 if parent_id != previous['generation_id']:
                     raise ValueError('explicit_parent_generation_required')
-                if json.loads(previous['result'])['status'] in ('RUNNING', 'RECEIVED', 'UNKNOWN'):
+                prior = ExecutionResult.model_validate_json(previous['result'])
+                if prior.status == 'UNKNOWN' and reconciliation_id:
+                    from .reconciliation import verify
+                    verify(self, reconciliation_id, prior, self.context(receipt), approval_id, authorize_current)
+                elif prior.status in ('RUNNING', 'RECEIVED', 'UNKNOWN'):
                     raise ValueError('reconcile_previous_execution_first')
             elif parent_id:
                 raise ValueError('unknown_parent_generation')
@@ -185,7 +190,7 @@ class IntakeStore:
 
 
 def dispatch(store: IntakeStore, raw: dict, *, request_id: str, authorize_current,
-             launch, parent_id: str | None = None) -> ExecutionResult:
+             launch, parent_id: str | None = None, reconciliation_id=None, approval_id=None) -> ExecutionResult:
     """Application boundary. authorize_current must reload both current owner ledgers.
 
     It is a trusted application callback, never a packet flag/model declaration.
@@ -197,13 +202,16 @@ def dispatch(store: IntakeStore, raw: dict, *, request_id: str, authorize_curren
     context = store.context(receipt)
     # Recheck after I/O, immediately before the atomic reservation and launch.
     authorize_current(context['packet'])
-    result, fresh = store.reserve(receipt, request_id, parent_id)
+    result, fresh = store.reserve(receipt, request_id, parent_id, reconciliation_id=reconciliation_id,
+                                  approval_id=approval_id, authorize_current=authorize_current)
     if not fresh:
         return store.status(result.generation_id)
     try:
         terminal = launch(result.model_copy(deep=True), context)
         if not isinstance(terminal, ExecutionResult):
             raise ValueError('typed_terminal_result_required')
+        if reconciliation_id:
+            terminal.host['continuation_reconciliation_id'] = reconciliation_id
         store.finish(terminal)
         return terminal
     except Exception as exc:

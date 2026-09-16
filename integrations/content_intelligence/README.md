@@ -309,3 +309,21 @@ Exact owner edits override candidate wording. Optional knowledge may be omitted 
 Creative approval does not clear UNKNOWN execution history. The unchanged reserve guard raises
 reconcile_previous_execution_first. C5.10 does not reconcile, rewrite history or use a new intake
 database to bypass the guard. Host lifecycle/permissions and truth categories remain unchanged.
+
+## C5.11 - append-only audited UNKNOWN reconciliation
+
+reconciliation.append is a trusted local operator API, never a model approval or generic
+ignore-UNKNOWN switch. Only the Planner psychology whitespace false negative is eligible:
+replay exact correlated native terminal output, strict identity/context/artifact checks,
+original single failure reason, current fixed validator, manifest and current approval of its
+explicit C5.9 derived projection. Governance/selection are reloaded by the application authorizer.
+Missing assets fail closed; no fallback copies or alternate sources.
+
+Original execution/result/events stay UNKNOWN and unchanged. Separate execution_reconciliation
+SQLite records bind resolver/time/version/commit, evidence paths/hashes and plan/approval/packet.
+SQL triggers reject UPDATE/DELETE. Hashes bind contents, not multiuser authentication; local
+operator/store remains trusted. Reserve/dispatch require explicit reconciliation_id + approval_id.
+UNKNOWN without reconciliation blocks. A matching record must pass every evidence/current-state
+check again at reservation. RUNNING/RECEIVED never unlock. No auto-retry, terminal overwrite,
+new intake database or Planner rerun. Existing Writer/Critic/max-one-rewrite orchestration,
+host permissions, truth guards and legacy behavior remain unchanged.
