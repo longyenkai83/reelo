@@ -158,7 +158,8 @@ def test_one_planner_call_stops_before_writer(setup,tmp_path,monkeypatch):
         assert context==c and stage['stage_type']=='CREATIVE_PLAN'
         assert 'plan_schema' in inputs
         calls.append(stage)
-        return dict(schema_version='reelo.host-stage.1',stage=stage,output=a['plan']['proposal']),dict(task_id='p',tool_use_id='p')
+        from tests.purified_fixture import purified
+        return dict(schema_version='reelo.host-stage.1',stage=stage,output=purified(packet,Path(assets[0]['path']))),dict(task_id='p',tool_use_id='p')
     monkeypatch.setattr(host,'invoke_stage',invoke)
     result=dispatch(IntakeStore(tmp_path/'intake'),packet,request_id='plan',authorize_current=lambda p:None,launch=host)
     assert result.status=='PLAN_PENDING_APPROVAL' and len(calls)==1 and not result.artifacts

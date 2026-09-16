@@ -1,5 +1,10 @@
 # RP3.A — canonical semantics, Slice A1
 
+E1 extension: the same canonical JSON now carries explicit route-specific overrides
+for title checks 1/8 (optional psychology and internal-table presentation), documented
+in [PURIFIED-PLAN-E1.md](PURIFIED-PLAN-E1.md). All eight vetoes remain. The original
+A1 meanings below continue to describe the historical V2 compatibility route.
+
 Authority: owner-approved RP2 plus the bounded RP3.A implementation request.
 The single semantic origin for **mode meaning, V2 title review and Critic
 severity/repair** is [semantics-a1.json](semantics-a1.json). Its ordered title_checks

@@ -158,6 +158,7 @@ async function writeOne(rawItem, idx) {
 async function writeV2() {
   const { execution, context, assets } = V2_BOUND
   const pack = V2_BOUND.context_pack
+  const purified = pack && pack.plan_route === 'reelo.creative-plan.e1'
   function freeze(value) {
     if (value && typeof value === 'object') {
       Object.values(value).forEach(freeze)
@@ -240,6 +241,13 @@ async function writeV2() {
     'Report missing support rather than claiming unseen sources were read. Canonical knowledge replaces legacy recipe mandates, never truth/approval/title-eight guards. ' +
     'No source-file Read permission is granted; independently assess the supplied source excerpts against the draft. '
   if (pack && pack.missing_context.length) shared += '\nRequired context missing: ' + JSON.stringify(pack.missing_context) + '. Report this as blocking; do not certify voice or drafting readiness.'
+  if (purified) shared += '\nE1 purified plan authority: psychology NONE is valid and must remain NONE. Do not choose new psychology, job, recipe, Story, proof, mode, hook/title direction or angle during writing/rewriting. ' +
+    'Use natural prose, transitions, rhythm and safe imagery within the approved meaning. Emotional movement is planned reader experience, not permission to fabricate source emotions. ' +
+    'The single human gate sees recommended components and at most one alternative. The internal title-eight appendix is compatibility evidence, not extra approvals. ' +
+    'Apply canonical E1 title-eight compatibility meanings in the pack: explicit NONE and SELF_MADE do not require a reference library. All eight checks still veto PASS when false. ' +
+    'Review CLEAR, RELEVANT, VALUABLE, TRUE, FELT, COMPLETE semantically; never six numeric scores. A source-grounded Story without useful payoff is a PLAN defect, not a request to add emotion. ' +
+    'Each Critic finding must say WHAT (message), WHERE (affected_text), WHY (why), and repair_layer PROSE/PLAN/UPSTREAM_OWNER/CUSTOMER_INTELLIGENCE/PLATFORM. ' +
+    'Recipe, Story function, emotional movement or outline meaning repair belongs to PLAN and a new human-reviewed revision. Angle/One Idea meaning beyond B belongs to UPSTREAM_OWNER. Writer may only repair prose. '
   if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +
     '\nExecute this plan, do not re-plan. Selected hook/title are exact approved wording; use them unchanged. ' +
     'Keep selected psychology, treatment, format, Story/Knowledge sources and outline sequence. ' +
@@ -297,6 +305,11 @@ async function writeV2() {
     },
     required: ['plan_fidelity', 'title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
+  if (purified) {
+    criticSchema.properties.findings.items.properties.why = string
+    criticSchema.properties.findings.items.properties.repair_layer = {type:'string', enum:['PROSE','PLAN','UPSTREAM_OWNER','CUSTOMER_INTELLIGENCE','PLATFORM']}
+    criticSchema.properties.findings.items.required.push('why', 'repair_layer')
+  }
   const criticize = draft => agent(shared + '\n' +
     (pack ? 'Independent Critic: apply canonical eight title meanings, truth guards and approved plan; report typed defects.' : CRITIC_PROMPT('[structured draft below; no disk draft]', draft.format)) +
     '\nV2 override: read draft below, not a file. Independently check every customer assertion against A, '
@@ -340,7 +353,26 @@ async function writeV2() {
   freeze(V2_BOUND.inputs)
   if (stage.stage_type !== 'CREATIVE_PLAN' && (!approved || approved.decision !== 'approved')) throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
   let output
-  if (stage.stage_type === 'CREATIVE_PLAN') {
+  if (stage.stage_type === 'CREATIVE_PLAN' && purified) {
+    output = await agent(shared + '\nCreate only a reelo.creative-plan.e1 PROPOSED integrated plan. No content, approval or writes. ' +
+      'WHAT TO SAY remains selected Zone B, grounded in Zone A. one_idea expresses that meaning, never a replacement angle or new customer truth. ' +
+      'Resolve reader_value per outline section, content_job and recipe_id c1:<JOB>, proof_plan, emotional_movement, opening_plan, title_plan, outline/payoff and CTA. ' +
+      'Psychology may be the literal NONE; it is optional expression support, not a required justification. If used, supply the selected stable reference_id and exact supported mechanism; never annotated paths. ' +
+      'Proof kinds: CUSTOMER_EVIDENCE uses exact packet evidence_ids; CREATOR_STORY/CREATOR_KNOWLEDGE/EXTERNAL_KNOWLEDGE use exact allowed path/hash/unique section/support_quote and origin. ' +
+      'CREATOR_KNOWLEDGE is attributed creator_observation from creator sources, not external facts turned into lived learning. ' +
+      'NONE only for nonfactual reflection needing no proof; ILLUSTRATIVE_AI must be clearly disclosed and cannot support real factual claims. Set requires_factual_support honestly. ' +
+      'Story is optional. DIRECT needs supported same experience; ADJACENT must not become the same customer situation. Every used proof/Story needs a contribution to payoff. No source emotion/realization/result may be invented. ' +
+      'Emotional movement: start_state, tension_or_question, optional change_or_turn, end_state. TEACH can move confusion to clarity; REFLECT may be quiet. No forced drama or contrast. ' +
+      'Choose format REEL/SHORT_ARTICLE/LONG_ARTICLE. Opening: rapid context/relevance/curiosity/truth/clarity. Optional reel_package only for REEL, never required for articles. ' +
+      'opening_plan and title_plan each contain one recommended Candidate and optionally one meaningful alternative, not eight hooks/five titles for the human gate. ' +
+      'Each Candidate keeps stable candidate_id, text, rationale, exact evidence_refs and honest intent/factual/natural semantic checks. ' +
+      'Title-eight compatibility only: include enough distinct compatibility_titles to make three-to-five rows TOTAL with title_plan choices. These internal rows are not human recommendations. ' +
+      'Each internal row holds candidate, frame SELF_MADE or exact sourced heading, and optional frame_reference_id. selected_title_frame follows the same rule. Code projects psychology/frame/treatment columns; no duplicate hand-written table. ' +
+      'Preserve limitations, advisories and publication_requirements. Set safety flags only after semantic review; no six-lens scoring. ' +
+      'Only selected loaded support may substantiate proof; available metadata is not a read source. Missing support is a blocker or an honest omission, never fabricated proof.\n' +
+      JSON.stringify(pack.available_for_matching),
+      {label:'V2: purified creative planner', phase:'Viết', schema:V2_BOUND.inputs.plan_schema})
+  } else if (stage.stage_type === 'CREATIVE_PLAN') {
     output = await agent(shared + '\nCreate a PROPOSED internal Reelo creative plan only. No article, approval or writes. ' +
       'WHAT TO SAY is locked in A/B: do not select another insight, angle, pain/gain, identity, priority or meaning of belief shift. ' +
       'Choose HOW TO EXPRESS: real creator story first when relevant, then creator observation/lesson, then sourced knowledge; ' +

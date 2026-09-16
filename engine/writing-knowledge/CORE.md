@@ -1,5 +1,9 @@
 # Writing Knowledge C1 — cơ chế trước, mẫu tham khảo sau
 
+E1: [Purified Plan](../../integrations/content_intelligence/PURIFIED-PLAN-E1.md)
+đã cho phép psychology NONE trong plan mới. Các ghi chú compatibility C1/D1 bên
+dưới mô tả route lịch sử; không được dùng để ép psychology lên route E1.
+
 D1 runtime integration hiện được mô tả tại [Context Packs](../../integrations/content_intelligence/CONTEXT-PACKS-D1.md).
 Các ghi chú “chưa nối runtime” bên dưới mô tả phạm vi C1 gốc; D1 đã project các
 section được chọn vào từng stage, vẫn giữ psychology/title-eight compatibility.

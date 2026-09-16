@@ -129,6 +129,8 @@ def source_role(path):
 
 
 def validate_proposal(raw, context, assets):
+    from .purified_plan import is_purified, validate
+    if is_purified(raw): return validate(raw, context, assets)
     p = PlanProposal.model_validate(raw).model_dump()
     from .context_packs import validate_recipe, asset_id
     if p['content_job'] is not None or p['recipe_id'] is not None:
@@ -193,6 +195,8 @@ def candidate_eligibility(c):
 
 
 def plan_blockers(p):
+    from .purified_plan import execution_view
+    p = execution_view(p)
     failures = list(p.get('issues', [])) + list(p.get('blocking_issues', [])) + list(p.get('outline_blocking_issues', []))
     failures += [k for k in ('truth_preserved', 'selected_intent_preserved', 'reader_centered_pov', 'non_prescriptive_tone') if not p[k]]
     failures += [k for k in ('reader_value_clear', 'narrative_payoff_clear') if not p.get(k)]
@@ -227,6 +231,13 @@ def review_readiness(p, context, *, human_approved=False):
     Packet requirements cannot be cleared by model omission/softening or plan approval.
     Semantic judgments require source review; deterministic checks do not prove meaning.
     """
+    from .purified_plan import is_purified, execution_view, gate
+    if is_purified(p):
+        result = review_readiness(execution_view(p), context, human_approved=human_approved)
+        result.pop('candidates')
+        result['integrated_plan'] = gate(p)
+        result['integrated_plan']['publication_requirements'] = result['publication_requirements']
+        return result
     requirements = list(p.get('publication_requirements', []))
     requirements += [json.dumps(r, ensure_ascii=False, sort_keys=True)
                      for r in context['packet'].get('external_evidence_requirements', [])]
@@ -256,15 +267,21 @@ class PlanStore:
         db.row_factory = sqlite3.Row
         return db
 
-    def save(self, proposal, context, assets, generation_id):
+    def save(self, proposal, context, assets, generation_id, *, revision_audit=None):
         proposal = validate_proposal(proposal, context, assets)
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
+            if revision_audit is not None:
+                current = db.execute('SELECT plan_id FROM plans WHERE packet_id=? ORDER BY revision DESC LIMIT 1',
+                                     (proposal['packet_id'],)).fetchone()
+                if not current or current[0] != revision_audit['parent_plan_id']:
+                    raise ValueError('superseded_creative_plan')
             rev = db.execute('SELECT COALESCE(MAX(revision),0)+1 FROM plans WHERE packet_id=?', (proposal['packet_id'],)).fetchone()[0]
             plan = dict(creative_plan_id='CP-'+uuid4().hex, plan_revision=rev, context_hash=value_hash(context),
                         proposal=proposal, assets=assets, generation_id=generation_id,
                         created_at=datetime.now(timezone.utc).isoformat(), blockers=plan_blockers(proposal),
                         review_view=review_readiness(proposal, context))
+            if revision_audit is not None: plan['revision_audit'] = revision_audit
             plan['plan_hash'] = value_hash(plan)
             db.execute('INSERT INTO plans VALUES(?,?,?,?)', (plan['creative_plan_id'], proposal['packet_id'], rev, json.dumps(plan)))
         return plan
@@ -283,6 +300,19 @@ class PlanStore:
         if owner_decision == 'EDIT_AND_APPROVE':
             review['decision'] = 'approved'
         plan = self.get(plan_id); p = plan['proposal']
+        from .purified_plan import is_purified, execution_view
+        if is_purified(p):
+            if any(review[k] is not None for k in ('edited_hook', 'edited_title', 'edited_outline')):
+                raise ValueError('purified_edit_requires_plan_revision')
+            if review['selected_mode'] is not None and review['selected_mode'] != p['format']:
+                raise ValueError('mode_edit_requires_plan_revision')
+            review['selected_mode'] = p['format']
+            # Internal compatibility titles are not additional human choices.
+            allowed_titles = [p['title_plan']['recommended']['candidate_id']]
+            if p['title_plan']['alternative']: allowed_titles.append(p['title_plan']['alternative']['candidate_id'])
+            if review['title_id'] is not None and review['title_id'] not in allowed_titles:
+                raise ValueError('internal_title_requires_new_plan_revision')
+            p = execution_view(p)
         if review['expected_plan_hash'] != plan['plan_hash']: raise ValueError('stale_plan_review')
         if review['decision'] == 'approved' and (plan['blockers'] or plan_blockers(p)):
             raise ValueError('blocked_plan_cannot_be_approved')
@@ -319,6 +349,26 @@ class PlanStore:
             if latest != plan_id: raise ValueError('superseded_creative_plan')
             db.execute('INSERT INTO reviews VALUES(?,?,?)', (result['approval_id'], plan_id, json.dumps(result)))
         return result
+
+    def revise(self, plan_id, proposal, context, assets, *, reviewer, human_attested, expected_plan_hash):
+        """Append a pending revision. Never carries approval across a consequential edit."""
+        from .purified_plan import is_purified
+        old = self.get(plan_id)
+        if human_attested is not True or not isinstance(reviewer, str) or not reviewer.strip():
+            raise ValueError('human_plan_revision_required')
+        if old['plan_hash'] != expected_plan_hash: raise ValueError('stale_plan_review')
+        if not is_purified(old['proposal']) or not is_purified(proposal):
+            raise ValueError('explicit_purified_revision_required')
+        if old['context_hash'] != value_hash(context): raise ValueError('plan_upstream_identity_mismatch')
+        if any(proposal[k] != old['proposal'][k] for k in ('packet_id', 'angle_id', 'verified_insight_id', 'one_idea')):
+            raise ValueError('upstream_owner_correction_required')
+        with self.connect() as db:
+            latest = db.execute('SELECT plan_id FROM plans WHERE packet_id=? ORDER BY revision DESC LIMIT 1',
+                                (old['proposal']['packet_id'],)).fetchone()[0]
+        if latest != plan_id: raise ValueError('superseded_creative_plan')
+        return self.save(proposal, context, assets, 'OWNER-REVISION', revision_audit=dict(
+            parent_plan_id=plan_id, parent_plan_hash=expected_plan_hash, reviewer=reviewer,
+            human_attested=True, approval_inherited=False))
 
     def approved(self, approval_id, context, assets):
         with self.connect() as db:

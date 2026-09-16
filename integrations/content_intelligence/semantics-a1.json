@@ -184,5 +184,9 @@
       ]
     }
   ],
-  "compatibility": "Legacy seven-box prompt and eight-box library coexist historically. Preserve both, explicitly isolate via V2 override; this is not proof of legacy semantic consistency. Do not globally rewrite legacy."
+  "compatibility": "Legacy seven-box prompt and eight-box library coexist historically. Preserve both, explicitly isolate via V2 override; this is not proof of legacy semantic consistency. Do not globally rewrite legacy.",
+  "purified_e1_title_overrides": {
+    "1": "E1 explicit compatibility: keep separate psychology/frame/treatment columns. Psychology may be explicitly NONE without a library; when used verify stable reference membership. Frame may be SELF_MADE; sourced frames must verify identity. No invented customer motive.",
+    "8": "Keep the real three-to-five-row internal title table and its three columns for Critic verification. The single human gate shows only the recommended title and at most one meaningful alternative. Internal rows are not additional human choices or automatically approved wording."
+  }
 }

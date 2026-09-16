@@ -1,9 +1,13 @@
 # V2 Content Intelligence consumer
 
+RP3.E: [purified plan contract, optional psychology and human revisions](PURIFIED-PLAN-E1.md).
+New Planner runs use the explicit E1 route; historical/legacy validation remains separate.
+
 RP3.C knowledge authority: [Writing Core, jobs and mechanisms](../../engine/writing-knowledge/CORE.md)
 and [asset dispositions](../../engine/writing-knowledge/ASSET-MAP.md).
 D1 runtime integration: [stage context packs and operator selection](CONTEXT-PACKS-D1.md).
-Canonical projections now reach stages; runtime psychology/title guards remain.
+Canonical projections reach stages; E1 allows psychology NONE, while historical
+psychology validation and the eight title vetoes remain protected.
 Historical approvals are not upgraded. Do not treat optional reference as permission to bypass guards.
 
 RP3.B creator isolation: [creator boundary and configuration](CREATOR-BOUNDARY-B1.md).

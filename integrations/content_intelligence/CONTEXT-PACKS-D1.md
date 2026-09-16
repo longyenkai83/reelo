@@ -1,5 +1,9 @@
 # D1 — Stage context packs / knowledge projection
 
+E1 extension: [purified plan route](PURIFIED-PLAN-E1.md) makes psychology optional
+for new plans and changes their human-gate projection. The required-psychology
+statements below describe the historical D1 route, not E1 NONE plans.
+
 Runtime knowledge integration after C1. Phase 8 CIP, Zone A/B, nine hard
 categories, source/currentness/approval guards and one-rewrite lifecycle remain.
 No creative acceptance is implied. C5 FROZEN; Phase 9 NOT ACCEPTED.

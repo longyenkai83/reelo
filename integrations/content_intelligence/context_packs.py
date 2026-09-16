@@ -72,6 +72,20 @@ def project_approval(approved, critic=False):
     """No unselected candidate text or full source manifest in Writer/Rewrite prompt."""
     selected = {k: v for k, v in approved.items() if k not in ('plan',)}
     proposal = approved['plan']['proposal']
+    from .purified_plan import is_purified, gate, title_table, components
+    if is_purified(proposal):
+        semantic = gate(proposal)
+        semantic.update(schema_version=proposal['schema_version'], packet_id=proposal['packet_id'],
+                        verified_insight_id=proposal['verified_insight_id'], angle_id=proposal['angle_id'],
+                        truth_type=proposal['truth_type'])
+        for name, key in [('opening_plan', 'selected_hook'), ('title_plan', 'selected_title')]:
+            chosen = next(c for c in components(proposal[name]) if c['candidate_id'] == approved[key]['candidate_id'])
+            semantic[name] = dict(semantic[name], recommended=chosen, alternative=None)
+        if critic: semantic['title_eight_compatibility'] = title_table(proposal)
+        selected['plan'] = {k: approved['plan'][k] for k in
+                           ('creative_plan_id', 'plan_revision', 'plan_hash', 'context_hash')}
+        selected['plan']['proposal'] = semantic
+        return selected
     keep = ('content_job', 'recipe_id', 'format', 'treatment_or_truc', 'reader_value',
             'narrative_payoffs', 'cta_direction', 'creative_constraints', 'illustrations',
             'limitations', 'advisories', 'publication_requirements')
@@ -117,6 +131,8 @@ def assemble(stage, inputs, assets, policy=None):
             selected[a['asset_id']] = ('explicit_task_reference', selection.get('section'))
     approved = inputs.get('approved_plan')
     proposal = approved['plan']['proposal'] if approved else None
+    from .purified_plan import is_purified, ROUTE
+    purified = is_purified(proposal) if proposal else inputs.get('plan_route') == ROUTE
     if proposal:
         validate_recipe(proposal.get('content_job'), proposal.get('recipe_id'))
     mode = (approved.get('selected_mode') or proposal['format']) if approved else inputs.get('selected_mode')
@@ -130,9 +146,9 @@ def assemble(stage, inputs, assets, policy=None):
             selected.setdefault(a['asset_id'], ('configured_creator_' + a['role'].lower(), None))
         if stage == 'CREATIVE_PLAN' and a['role'] == 'EDITORIAL_HISTORY':
             selected.setdefault(a['asset_id'], ('editorial_recent_entries', None))
-        if stage == 'CREATIVE_PLAN' and a['role'] == 'PSYCHOLOGY':
+        if stage == 'CREATIVE_PLAN' and a['role'] == 'PSYCHOLOGY' and not purified:
             selected.setdefault(a['asset_id'], ('runtime_psychology_compatibility', None))
-        if stage == 'CRITIC' and Path(a['path']).name == 'bo-tieu-de.md':
+        if stage == 'CRITIC' and Path(a['path']).name == 'bo-tieu-de.md' and not purified:
             selected.setdefault(a['asset_id'], ('title_eight_library_verification', None))
     if approved:
         for match in approved['selected_story_refs'] + approved['selected_knowledge_refs']:
@@ -142,10 +158,17 @@ def assemble(stage, inputs, assets, policy=None):
             a = by_path[path]
             matches.setdefault(a['asset_id'], []).append(match)
             selected[a['asset_id']] = ('approved_source_support', None)
-        if stage == 'CRITIC':
+        if stage == 'CRITIC' and approved['psychology'] != 'NONE':
             path = Path(approved['psychology']['library_source']).as_posix()
             if path not in by_path: raise ValueError('approved_psychology_library_required')
             selected[by_path[path]['asset_id']] = ('independent_psychology_verification', None)
+        if stage == 'CRITIC' and purified:
+            references = [proposal['selected_title_frame_reference_id']]
+            references += [r['frame_reference_id'] for r in proposal['compatibility_titles']]
+            for ref in references:
+                if ref is not None:
+                    if ref not in by_id: raise ValueError('title_frame_reference_required')
+                    selected[ref] = ('title_eight_selected_reference_verification', None)
     trace = dict(stage=stage, authority_inputs=['immutable CIP Zone A/B', 'stage input hash',
                  'human approval/currentness' if approved else 'PROPOSED plan only'],
                  writing_knowledge=[], creator_assets=[], reference_assets=[], source_support=[],
@@ -155,6 +178,7 @@ def assemble(stage, inputs, assets, policy=None):
                      'agent definition', 'embedded workflow text'],
                      note='Not explicit asset Read receipts; host may inject additional instructions.'))
     payload = dict(stage=stage, mode=mode, creator_assets=[], references=[], source_support=[],
+                   plan_route=ROUTE if purified else 'legacy_v2',
                    available_for_matching=[], knowledge={},
                    approved_plan=project_approval(approved, stage == 'CRITIC') if approved else None)
     for a in records:
@@ -166,6 +190,8 @@ def assemble(stage, inputs, assets, policy=None):
         if a['asset_id'] not in selected:
             receipt['states'].append('OMITTED')
             receipt['reason'] = 'not_required_for_stage'
+            if purified and a['role'] == 'PSYCHOLOGY':
+                receipt['reason'] = 'psychology_none' if approved and approved['psychology'] == 'NONE' else 'optional_psychology_not_selected'
             trace['omitted_optional_families'].append(a['role'])
             if stage == 'CREATIVE_PLAN' and a['role'] in ('STORY', 'KNOWLEDGE', 'REFERENCE'):
                 payload['available_for_matching'].append(a)
@@ -237,7 +263,8 @@ def assemble(stage, inputs, assets, policy=None):
     payload['missing_context'] = [] if any(a['role'] == 'VOICE' for a in payload['creator_assets']) else ['configured_creator_voice']
     spec = json.loads(canonical[KNOWLEDGE_PATHS[2]])
     if stage in ('CREATIVE_PLAN', 'CRITIC'):
-        payload['knowledge']['title_compatibility'] = spec['title_checks']
+        payload['knowledge']['title_compatibility'] = [dict(id=r['id'], meaning=spec.get('purified_e1_title_overrides', {}).get(str(r['id']), r['meaning']))
+                                                       if purified else r for r in spec['title_checks']]
     if stage in ('CRITIC', 'REWRITE'):
         payload['knowledge']['repair_layers'] = spec['repair_layers']
     if stage == 'REWRITE':

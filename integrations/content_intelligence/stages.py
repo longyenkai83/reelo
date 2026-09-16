@@ -52,6 +52,8 @@ class CriticFinding(StageModel):
     message: str
     evidence_refs: list[str]
     affected_text: str
+    why: str | None = None
+    repair_layer: Literal['PROSE', 'PLAN', 'UPSTREAM_OWNER', 'CUSTOMER_INTELLIGENCE', 'PLATFORM'] | None = None
 
 
 class CriticOutput(StageModel):
@@ -83,6 +85,8 @@ CHECKS = ('truth_preserved', 'selected_intent_preserved', 'limitations_preserved
 def validate_output(stage_type, raw, context):
     if stage_type == 'CREATIVE_PLAN':
         from .creative_plan import PlanProposal
+        from .purified_plan import PurifiedPlan, is_purified
+        if is_purified(raw): return PurifiedPlan.model_validate(raw).model_dump()
         return PlanProposal.model_validate(raw).model_dump()
     if stage_type in ('WRITER', 'REWRITE'):
         draft = WriterOutput.model_validate(raw).model_dump()
@@ -158,6 +162,8 @@ def execute_stages(execution, context, work, assets, invoke, *, approved_plan, r
         raise ValueError('human_creative_approval_required')
     original_plan = encoded(approved_plan)
     original_context = encoded(context)
+    from .purified_plan import is_purified
+    purified = is_purified(approved_plan['plan']['proposal'])
     records = []
     execution.host = dict(profile='phase9-stage-wise', stages=records, assets=assets)
     def verify_completed():
@@ -191,11 +197,20 @@ def execute_stages(execution, context, work, assets, invoke, *, approved_plan, r
             if encoded(recheck_approval()) != original_plan:
                 raise ValueError('approval_not_current')
             if stage_type.startswith('CRITIC'):
+                if purified:
+                    if (normalized['blocking_issues'] or normalized.get('plan_fidelity') is not True) and not normalized['findings']:
+                        raise ValueError('purified_critic_actionable_findings_required')
+                    for finding in normalized['findings']:
+                        if not (finding.get('why') or '').strip() or not finding.get('repair_layer'):
+                            raise ValueError('purified_critic_repair_layer_required')
                 if normalized.get('plan_fidelity') is not True:
                     normalized['blocking_issues'].append('approved_plan_fidelity_not_confirmed')
                     normalized['verdict'] = 'REVISE'
                 if inputs['draft']['title'] != approved_plan['selected_title']['text']:
                     normalized['blocking_issues'].append('selected_title_changed')
+                    normalized['verdict'] = 'REVISE'
+                if purified and not inputs['draft']['content'].lstrip().startswith(approved_plan['selected_hook']['text']):
+                    normalized['blocking_issues'].append('selected_hook_changed')
                     normalized['verdict'] = 'REVISE'
                 if inputs['draft']['format'] != approved_plan['plan']['proposal']['format']:
                     normalized['blocking_issues'].append('selected_format_changed')
@@ -233,7 +248,9 @@ def execute_stages(execution, context, work, assets, invoke, *, approved_plan, r
                     execution.status, execution.critic_status = 'DRAFT_READY', 'PASS'
                     break
                 execution.critic_status = 'FAIL'
-                if stage_type == 'CRITIC2':
+                if stage_type == 'CRITIC2' or (purified and any(
+                        f['severity'] == 'blocking' and f.get('repair_layer') != 'PROSE'
+                        for f in normalized['findings'])):
                     execution.status = 'CRITIC_FAILED'
                     execution.validation_issues = normalized['blocking_issues']
                     break
