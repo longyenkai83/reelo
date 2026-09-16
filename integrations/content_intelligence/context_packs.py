@@ -78,6 +78,8 @@ def project_approval(approved, critic=False):
         semantic.update(schema_version=proposal['schema_version'], packet_id=proposal['packet_id'],
                         verified_insight_id=proposal['verified_insight_id'], angle_id=proposal['angle_id'],
                         truth_type=proposal['truth_type'])
+        if proposal['schema_version'] == 'reelo.journey-creative-plan.1':
+            semantic.update({k: proposal[k] for k in ('campaign_id', 'slot_id', 'context_hash')})
         for name, key in [('opening_plan', 'selected_hook'), ('title_plan', 'selected_title')]:
             chosen = next(c for c in components(proposal[name]) if c['candidate_id'] == approved[key]['candidate_id'])
             semantic[name] = dict(semantic[name], recommended=chosen, alternative=None)
@@ -132,7 +134,7 @@ def assemble(stage, inputs, assets, policy=None):
     approved = inputs.get('approved_plan')
     proposal = approved['plan']['proposal'] if approved else None
     from .purified_plan import is_purified, ROUTE
-    purified = is_purified(proposal) if proposal else inputs.get('plan_route') == ROUTE
+    purified = is_purified(proposal) if proposal else inputs.get('plan_route') in (ROUTE, 'reelo.journey-creative-plan.1')
     if proposal:
         validate_recipe(proposal.get('content_job'), proposal.get('recipe_id'))
     mode = (approved.get('selected_mode') or proposal['format']) if approved else inputs.get('selected_mode')
@@ -178,7 +180,7 @@ def assemble(stage, inputs, assets, policy=None):
                      'agent definition', 'embedded workflow text'],
                      note='Not explicit asset Read receipts; host may inject additional instructions.'))
     payload = dict(stage=stage, mode=mode, creator_assets=[], references=[], source_support=[],
-                   plan_route=ROUTE if purified else 'legacy_v2',
+                   plan_route=(proposal['schema_version'] if proposal else inputs.get('plan_route', ROUTE)) if purified else 'legacy_v2',
                    available_for_matching=[], knowledge={},
                    approved_plan=project_approval(approved, stage == 'CRITIC') if approved else None)
     for a in records:

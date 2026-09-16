@@ -158,7 +158,8 @@ async function writeOne(rawItem, idx) {
 async function writeV2() {
   const { execution, context, assets } = V2_BOUND
   const pack = V2_BOUND.context_pack
-  const purified = pack && pack.plan_route === 'reelo.creative-plan.e1'
+  const journey = context.schema_version === 'reelo.journey-context.1'
+  const purified = pack && ['reelo.creative-plan.e1', 'reelo.journey-creative-plan.1'].includes(pack.plan_route)
   function freeze(value) {
     if (value && typeof value === 'object') {
       Object.values(value).forEach(freeze)
@@ -173,8 +174,8 @@ async function writeV2() {
   const immutable = JSON.stringify(context)
   const identity = JSON.stringify(execution.receipt)
   // Counter-evidence is validated Zone A evidence too; never force its omission.
-  const insight = packet.customer_truth.verified_insight
-  const refs = [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)]
+  const insight = packet ? packet.customer_truth.verified_insight : null
+  const refs = insight ? [...insight.evidence_refs, ...insight.contradictions.map(c => c.counter_ref)] : []
   const constraints = `V2 takes precedence over conflicting legacy source/psychology/profile rules.
     Creator truth is a separate boundary: external knowledge attributed to an author is not
     evidence that the creator learned it, lived it or met that author. Never turn an attributed
@@ -234,6 +235,17 @@ async function writeV2() {
     and a question or hedge does not make an unsupported identity/causal/market claim grounded.`
   let shared = constraints + '\n' + ownerQuality + '\n' + creatorContext(assets) + '\nIMMUTABLE PACKET:\n' + JSON.stringify(packet) +
     '\nAVAILABLE READ-ONLY ASSETS (exact paths and hashes):\n' + JSON.stringify(assets) + '\nAUTHORITATIVE EXECUTION IDENTITY:\n' + JSON.stringify({execution, stage: V2_BOUND.stage})
+  if (journey) shared += '\nJOURNEY ROUTE OVERRIDE: ' + JSON.stringify(context) +
+    '\nJourney slot owns the communication objective, one idea, recipe/job, mode and CTA INTENT. Voice owns CTA wording. ' +
+    'Copy slot.one_idea, content_job and recipe_id EXACTLY into those plan fields; copy slot.mode into format and slot.cta_intent into cta_direction. Do not paraphrase these locked strategy fields; expression belongs in hook/title/outline. ' +
+    'Candidate evidence_refs may contain only exact context.source_ids or actual CIP evidence IDs, never annotated paths/headings. Voice is style context, never a Knowledge proof. Pair one reader_value with each outline item. compatibility_titles must exclude title_plan choices: three-to-five DISTINCT rows TOTAL, no duplicate IDs/text. Copy support_quote literally including source Markdown, no paraphrase. ' +
+    'Awareness is PROPOSED campaign strategy, never observed customer motive, identity, buying intent or demand. ' +
+    'A real CIP, when present, retains its unchanged customer truth and selected strategy; otherwise packet is null and customer_evidence_ids MUST be empty. Never invent an insight/angle ID. ' +
+    'Creator/client/knowledge/market/future/offer sources keep the declared provenance and truth type. Client story is not creator autobiography; permission is scoped. Future possibilities stay hypothetical. ' +
+    'Use exactly the selected primary and useful supports. No mandatory Insight, Story or Knowledge. Previous slots/memory inform sequence, not customer facts. ' +
+    'CTA wording must implement the exact slot intent; never import a sale from a voice library into an early slot. Explicit authorized selling may use a direct CTA. ' +
+    'Campaign authorization permits execution, NOT a claim that a human approved this individual Creative Plan or final draft. No publishing. ' +
+    'Source audit belongs ONLY in structured source_ids/source_notes fields. content is public-facing prose beginning with the selected hook, no internal review header.'
   const approved = pack ? pack.approved_plan : V2_BOUND.inputs && V2_BOUND.inputs.approved_plan
   if (pack) shared += '\nD1 STAGE CONTEXT PACK (verified adapter-loaded excerpts, not model self-report):\n' + JSON.stringify(pack) +
     '\nD1 context override: required source support is supplied inline from independently verified reads for this stage. ' +
@@ -248,7 +260,7 @@ async function writeV2() {
     'Review CLEAR, RELEVANT, VALUABLE, TRUE, FELT, COMPLETE semantically; never six numeric scores. A source-grounded Story without useful payoff is a PLAN defect, not a request to add emotion. ' +
     'Each Critic finding must say WHAT (message), WHERE (affected_text), WHY (why), and repair_layer PROSE/PLAN/UPSTREAM_OWNER/CUSTOMER_INTELLIGENCE/PLATFORM. ' +
     'Recipe, Story function, emotional movement or outline meaning repair belongs to PLAN and a new human-reviewed revision. Angle/One Idea meaning beyond B belongs to UPSTREAM_OWNER. Writer may only repair prose. '
-  if (approved) shared += '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n' + JSON.stringify(approved) +
+  if (approved) shared += (journey ? '\nEXECUTION-AUTHORIZED CREATIVE PLAN (see authority_kind):\n' : '\nHUMAN-APPROVED INTERNAL CREATIVE PLAN:\n') + JSON.stringify(approved) +
     '\nExecute this plan, do not re-plan. Selected hook/title are exact approved wording; use them unchanged. ' +
     'Keep selected psychology, treatment, format, Story/Knowledge sources and outline sequence. ' +
     'Do not invent a new story or generate new hook/title candidates. Existing tables are in the plan. ' +
@@ -305,6 +317,12 @@ async function writeV2() {
     },
     required: ['plan_fidelity', 'title_meaning_clear', 'reader_centered_pov', 'non_prescriptive_tone', 'verdict', 'truth_preserved', 'selected_intent_preserved', 'limitations_preserved', 'external_claims_safe', 'title_criteria', 'creator_truth_preserved', 'context_scope_preserved', 'source_verification_complete', 'blocking_issues', 'notes', 'findings'],
   }
+  if (journey) {
+    writerSchema.properties.source_ids = {type:'array', items:string}
+    writerSchema.properties.source_notes = {type:'array', items:string}
+    writerSchema.required.push('source_ids', 'source_notes')
+    shared += '\nWriter must report all selected context.source_ids exactly. Critic evidence_refs may also cite these source IDs.'
+  }
   if (purified) {
     criticSchema.properties.findings.items.properties.why = string
     criticSchema.properties.findings.items.properties.repair_layer = {type:'string', enum:['PROSE','PLAN','UPSTREAM_OWNER','CUSTOMER_INTELLIGENCE','PLATFORM']}
@@ -351,10 +369,11 @@ async function writeV2() {
   }
   freeze(stage)
   freeze(V2_BOUND.inputs)
-  if (stage.stage_type !== 'CREATIVE_PLAN' && (!approved || approved.decision !== 'approved')) throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
+  const permitted = approved && (approved.decision === 'approved' || (journey && approved.decision === 'authorized_campaign_execution'))
+  if (stage.stage_type !== 'CREATIVE_PLAN' && !permitted) throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
   let output
   if (stage.stage_type === 'CREATIVE_PLAN' && purified) {
-    output = await agent(shared + '\nCreate only a reelo.creative-plan.e1 PROPOSED integrated plan. No content, approval or writes. ' +
+    output = await agent(shared + (journey ? '\nCreate a reelo.journey-creative-plan.1 PROPOSED plan, using exact campaign_id, slot_id and supplied context_hash. Use null packet/insight/angle IDs when there is no CIP. Respect selected source kinds; CLIENT_STORY, MARKET_OBSERVATION, FUTURE_POSSIBILITY, BUSINESS_CONTEXT and CUSTOMER_SPEECH retain their explicit origin. cta_direction must equal slot.cta_intent. ' : '\nCreate only a reelo.creative-plan.e1 PROPOSED integrated plan. ') + 'No content, approval or writes. ' +
       'WHAT TO SAY remains selected Zone B, grounded in Zone A. one_idea expresses that meaning, never a replacement angle or new customer truth. ' +
       'Resolve reader_value per outline section, content_job and recipe_id c1:<JOB>, proof_plan, emotional_movement, opening_plan, title_plan, outline/payoff and CTA. ' +
       'Psychology may be the literal NONE; it is optional expression support, not a required justification. If used, supply the selected stable reference_id and exact supported mechanism; never annotated paths. ' +
@@ -394,7 +413,7 @@ async function writeV2() {
       JSON.stringify(pack ? pack.available_for_matching : V2_BOUND.inputs.asset_roles),
       {label: 'V2: creative planner', phase: 'Viết', schema: V2_BOUND.inputs.plan_schema})
   } else if (stage.stage_type === 'WRITER') {
-    if (!approved || approved.decision !== 'approved') throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
+    if (!permitted) throw new Error('HUMAN_CREATIVE_APPROVAL_REQUIRED')
     output = await agent(shared + '\nYou are Reelo Writer. Execute the approved concise outline using relevant format/voice/Story/Knowledge references. ' +
       'Do not rerun legacy research, candidate generation or human gates. Return article plus brief source-role audit metadata. ' +
       'Read existing writing, voice and quality rules; retain craft without overriding approved choices.',
@@ -413,7 +432,6 @@ async function writeV2() {
   // One creative agent only. Python validates, persists and chooses the next stage.
   return { schema_version: 'reelo.host-stage.1', stage, output }
 }
-
 if (typeof V2_BOUND !== "undefined") return await writeV2()
 
 log(`Batch bắt đầu: ${items.length} bài (chạy cách ly, chỉ trả bảng tổng).`)

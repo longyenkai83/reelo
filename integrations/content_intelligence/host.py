@@ -194,6 +194,13 @@ class NativeHost:
             if hasattr(exc, 'trace'):
                 (work/'context-trace.json').write_text(encoded(exc.trace), encoding='utf8')
             raise
+        if context.get('schema_version') == 'reelo.journey-context.1':
+            # Source excerpts already validated against scoped catalog, then re-read for
+            # every independent stage by the journey recheck. No other creator vault.
+            pack['journey'] = context
+            trace['authority_inputs'] = ['journey plan and scope hash', 'current source/CI authority',
+                                         'human campaign authorization or actual sample approval']
+            trace['payload_hash'] = value_hash(pack)
         (work/'context-trace.json').write_text(encoded(trace), encoding='utf8')
         if pack['missing_context']:
             raise ValueError('creator_voice_context_required')

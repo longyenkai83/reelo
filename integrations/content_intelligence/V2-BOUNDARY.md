@@ -1,5 +1,11 @@
 # Cổng V2 — Content Intelligence → Reelo
 
+Journey restoration (owner 2026-09-16): entry `reelo.journey-context.1` theo
+`integrations/journey/README.md`, dùng chung Writer/Critic với provenance riêng.
+Không có CIP trong tuyến Story/Knowledge không có nghĩa được fallback sang legacy.
+Nếu có CIP, toàn bộ ràng buộc dưới đây vẫn áp dụng nguyên vẹn cho customer truth/Zone B.
+Campaign execution authority không phải phê duyệt customer truth hay quyền xuất bản.
+
 Chỉ áp dụng cho luồng `v2.content-intelligence-packet.1` đã qua adapter. Luồng cũ giữ nguyên.
 
 - Zone A là customer truth duy nhất; Zone B là ý định sáng tạo đã chọn, luôn PROPOSED.

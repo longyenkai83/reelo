@@ -9,6 +9,7 @@ from .creative_plan import Model, Candidate, Psychology, SourceMatch
 from .context_packs import validate_recipe, asset_id, selected_section
 
 ROUTE = 'reelo.creative-plan.e1'
+JOURNEY_ROUTE = 'reelo.journey-creative-plan.1'
 
 
 class Movement(Model):
@@ -94,7 +95,7 @@ class PurifiedPlan(Model):
 
 
 def is_purified(p):
-    return p.get('schema_version') == ROUTE
+    return p.get('schema_version') in (ROUTE, JOURNEY_ROUTE)
 
 
 def components(component):
@@ -115,13 +116,13 @@ def execution_view(p):
                 recommended_title_id=p['title_plan']['recommended']['candidate_id'])
     for proof in p['proof_plan']:
         source = proof['source']
-        if proof['kind'] == 'CREATOR_STORY':
+        if proof['kind'] in ('CREATOR_STORY', 'CLIENT_STORY'):
             view['story_matches'].append(source)
             movement = p['emotional_movement']
             view['narrative_payoffs'].append(dict(source_ref=source['source_ref'], section=source['section'],
                 story_job=proof['contribution'], setup=movement['start_state'],
                 tension_or_turn=movement['tension_or_question'], meaning=proof['contribution'], reader_payoff=p['payoff']))
-        elif proof['kind'] in ('CREATOR_KNOWLEDGE', 'EXTERNAL_KNOWLEDGE'):
+        elif source is not None:
             view['knowledge_matches'].append(source)
         elif proof['kind'] == 'ILLUSTRATIVE_AI':
             view['illustrations'].append(dict(description=proof['supports'], origin='illustrative_ai', disclosure=proof['disclosure']))
@@ -130,17 +131,24 @@ def execution_view(p):
 
 def validate(raw, context, assets):
     from .creative_plan import source_role
-    p = PurifiedPlan.model_validate(raw).model_dump()
+    from .evidence_context import is_journey, evidence
+    journey = is_journey(context)
+    if journey:
+        from integrations.journey.creative import JourneyCreativePlan, validate_identity, validate_proof_source
+        p = JourneyCreativePlan.model_validate(raw).model_dump()
+        validate_identity(p, context)
+    else:
+        p = PurifiedPlan.model_validate(raw).model_dump()
     if any(not p[k].strip() for k in ('one_idea', 'payoff')) or any(
             not p['emotional_movement'][k].strip() for k in ('start_state', 'tension_or_question', 'end_state')):
         raise ValueError('incomplete_purified_plan')
     validate_recipe(p['content_job'], p['recipe_id'])
-    packet = context['packet']; insight = packet['customer_truth']['verified_insight']
-    if (p['packet_id'], p['verified_insight_id'], p['angle_id']) != (
-            packet['packet_id'], insight['verified_insight_id'], packet['content_strategy']['angle']['angle_id']):
-        raise ValueError('plan_upstream_identity_mismatch')
-    refs = {r['evidence_id'] for r in insight['evidence_refs']}
-    refs.update(c['counter_ref']['evidence_id'] for c in insight['contradictions'])
+    if not journey:
+        packet = context['packet']; insight = packet['customer_truth']['verified_insight']
+        if (p['packet_id'], p['verified_insight_id'], p['angle_id']) != (
+                packet['packet_id'], insight['verified_insight_id'], packet['content_strategy']['angle']['angle_id']):
+            raise ValueError('plan_upstream_identity_mismatch')
+    refs = {r['evidence_id'] for r in evidence(context)[0]}
     allowed = {a['path']: a for a in assets}
     by_id = {asset_id(a['path']): a for a in assets}
     for proof in p['proof_plan']:
@@ -153,6 +161,8 @@ def validate(raw, context, assets):
                 raise ValueError('illustration_disclosure_required')
         elif kind == 'CUSTOMER_EVIDENCE':
             if not proof['evidence_ids'] or source: raise ValueError('customer_evidence_required')
+        elif journey:
+            validate_proof_source(proof, context, allowed)
         else:
             if not source or proof['evidence_ids']: raise ValueError('proof_source_required')
             path = Path(source['source_ref']).as_posix()
@@ -193,7 +203,8 @@ def validate(raw, context, assets):
         texts = [' '.join(c['text'].casefold().split()) for c in candidates]
         if len(set(texts)) != len(texts): raise ValueError('duplicate_component_wording')
         for c in candidates:
-            if not c['text'].strip() or not c['rationale'].strip() or not set(c['evidence_refs']) <= refs:
+            candidate_refs = refs | set(context['source_ids']) if journey else refs
+            if not c['text'].strip() or not c['rationale'].strip() or not set(c['evidence_refs']) <= candidate_refs:
                 raise ValueError('invalid_candidate_provenance')
     if not 3 <= len(view['title_candidates']) <= 5: raise ValueError('title_eight_compatibility_table_required')
     rows = [(p['selected_title_frame'], p['selected_title_frame_reference_id'])]

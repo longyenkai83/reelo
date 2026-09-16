@@ -1,3 +1,10 @@
+> **Owner correction 2026-09-16 — Journey restoration:** đọc thêm
+> `integrations/journey/README.md` và Insight `docs/v2/17-REELO-JOURNEY.md`.
+> Journey quyết định công việc nội dung; Insight chỉ là một nguồn. Tuyến Insight vẫn giữ
+> Human Governor/selected angle/CIP/current ledger. Các tuyến khác không tạo Insight giả.
+> Dùng opt-in Journey API/CLI cho campaign; không tự chạy legacy publication/writeback.
+> RP4 “ít bạn” tạm dừng, giữ lịch sử. Không Notion/publish/merge main.
+
 > Trước khi sửa kiến trúc/product logic V2: đọc Insight docs/v2/00–16 và contracts README
 > trên nhánh `v2-phase-9-reelo-integration`; đọc boundary/runbook trong
 > `integrations/content_intelligence/`. Nếu xung đột accepted decisions/Strategyzer: STOP, báo lại.

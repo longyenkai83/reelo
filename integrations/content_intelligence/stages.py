@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict
 
 from .adapter import encoded
 from .contract import value_hash
+from .evidence_context import is_journey, evidence
 
 
 class StageModel(BaseModel):
@@ -32,6 +33,12 @@ class WriterOutput(StageModel):
     issues: list[str]
     customer_evidence_ids: list[str]
     external_dispositions: list[Disposition]
+
+
+class JourneyWriterOutput(WriterOutput):
+    source_ids: list[str]
+    # Kept out of public prose; no internal header before the selected opening.
+    source_notes: list[str]
 
 
 FindingCategory = Literal[
@@ -86,30 +93,35 @@ def validate_output(stage_type, raw, context):
     if stage_type == 'CREATIVE_PLAN':
         from .creative_plan import PlanProposal
         from .purified_plan import PurifiedPlan, is_purified
+        if is_journey(context):
+            from integrations.journey.creative import JourneyCreativePlan
+            return JourneyCreativePlan.model_validate(raw).model_dump()
         if is_purified(raw): return PurifiedPlan.model_validate(raw).model_dump()
         return PlanProposal.model_validate(raw).model_dump()
     if stage_type in ('WRITER', 'REWRITE'):
-        draft = WriterOutput.model_validate(raw).model_dump()
+        draft = (JourneyWriterOutput if is_journey(context) else WriterOutput).model_validate(raw).model_dump()
         if draft['status'] == 'DRAFT':
-            insight = context['packet']['customer_truth']['verified_insight']
-            refs = insight['evidence_refs'] + [c['counter_ref'] for c in insight['contradictions']]
+            refs, requirements = evidence(context)
             allowed = {r['evidence_id'] for r in refs}
-            expected = sorted(r['strategy_field'] for r in context['packet']['external_evidence_requirements'])
+            expected = sorted(r['strategy_field'] for r in requirements)
             if (not draft['content'].strip() or not draft['title'].strip() or not draft['format'].strip()
-                    or not draft['customer_evidence_ids'] or not set(draft['customer_evidence_ids']) <= allowed
+                    or (bool(context.get('packet')) and not draft['customer_evidence_ids'])
+                    or not set(draft['customer_evidence_ids']) <= allowed
                     or sorted(r['strategy_field'] for r in draft['external_dispositions']) != expected
                     or any(r['disposition'] not in ('omitted', 'softened') or not r['explanation'].strip()
                            for r in draft['external_dispositions'])):
                 raise ValueError('writer_output_or_provenance_invalid')
+            if is_journey(context) and (set(draft['source_ids']) != set(context['source_ids'])
+                    or len(draft['source_ids']) != len(set(draft['source_ids']))):
+                raise ValueError('journey_writer_source_identity_mismatch')
         return draft
     critic = CriticOutput.model_validate(raw).model_dump()
     if len(critic['title_criteria']) != 8 or any(not s.strip() for s in critic['notes'] + critic['blocking_issues']):
         raise ValueError('malformed_critic_result')
     blocking = list(critic['blocking_issues'])
     normalized_findings = []
-    insight = context['packet']['customer_truth']['verified_insight']
-    allowed_refs = {r['evidence_id'] for r in insight['evidence_refs']}
-    allowed_refs.update(c['counter_ref']['evidence_id'] for c in insight['contradictions'])
+    allowed_refs = {r['evidence_id'] for r in evidence(context)[0]}
+    if is_journey(context): allowed_refs.update(context['source_ids'])
     for finding in critic['findings']:
         if not finding['message'].strip() or not set(finding['evidence_refs']) <= allowed_refs:
             raise ValueError('invalid_critic_finding')
@@ -158,7 +170,8 @@ def persist(path, body):
 
 
 def execute_stages(execution, context, work, assets, invoke, *, approved_plan, recheck_approval):
-    if not approved_plan or approved_plan['decision'] != 'approved':
+    if not approved_plan or approved_plan['decision'] not in (
+            ('approved', 'authorized_campaign_execution') if is_journey(context) else ('approved',)):
         raise ValueError('human_creative_approval_required')
     original_plan = encoded(approved_plan)
     original_context = encoded(context)
