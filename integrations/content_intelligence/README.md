@@ -339,6 +339,20 @@ original single failure reason, current fixed validator, manifest and current ap
 explicit C5.9 derived projection. Governance/selection are reloaded by the application authorizer.
 Missing assets fail closed; no fallback copies or alternate sources.
 
+RP4 bounded technical recovery also accepts `resolution_kind=e1_redundant_compatibility_titles`
+for a terminal E1 proposal rejected solely with `invalid_candidate_selection`. It removes only
+appendix rows duplicating a primary title's exact ID/text, identical safety flags, a subset of
+the primary evidence IDs and SELF_MADE framing. Primary fields and every other field are unchanged.
+The resulting proposal must pass the unchanged full validator and equal the separately stored,
+currently human-approved derived plan. This is a repair of an invalid transport, not a false-negative
+claim or an automatic approval. Different text, safety, source IDs, residual invalidity or additional
+plan edits cannot use it. D1 canonical asset manifest is replayed and hashed too.
+
+Both cases replay terminal correlation, permissions, current upstream authorization, source hashes
+and approval at reservation. Original UNKNOWN remains immutable. No Planner retry, generic recovery,
+truth relaxation, new intake store or change to Writer/Critic sequencing is introduced. Local operator
+dispatch supplies explicit reconciliation_id and approval_id to the existing adapter API.
+
 Original execution/result/events stay UNKNOWN and unchanged. Separate execution_reconciliation
 SQLite records bind resolver/time/version/commit, evidence paths/hashes and plan/approval/packet.
 SQL triggers reject UPDATE/DELETE. Hashes bind contents, not multiuser authentication; local

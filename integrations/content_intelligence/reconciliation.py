@@ -1,4 +1,4 @@
-"""Audited continuation of one proven Planner whitespace false negative.
+"""Audited continuation of two explicitly bounded Planner validation failures.
 
 Local operator authority, not a model API. No terminal execution is rewritten.
 Every reservation replays evidence and current governance/approval/source checks.
@@ -18,6 +18,31 @@ from .stages import stage_identity, validate_envelope
 
 REASON = 'psychology_whitespace_false_negative'
 RESOLUTION = 'RECONCILED_SAFE_TO_CONTINUE'
+TITLE_REASON = 'e1_redundant_compatibility_titles'
+
+
+def remove_redundant_titles(raw):
+    """Exact redundant appendix rows only; never repair prose, IDs or safety flags."""
+    from copy import deepcopy
+    require(raw.get('schema_version') == 'reelo.creative-plan.e1', 'e1_required')
+    primary = [raw['title_plan']['recommended']]
+    if raw['title_plan'].get('alternative'): primary.append(raw['title_plan']['alternative'])
+    by_id = {c['candidate_id']: c for c in primary}
+    require(len(by_id) == len(primary), 'ambiguous_primary_titles')
+    fixed = deepcopy(raw); kept = []; removed = []
+    for row in raw['compatibility_titles']:
+        c = row['candidate']; main = by_id.get(c['candidate_id'])
+        if main is None:
+            kept.append(row); continue
+        require(c['text'] == main['text'] and row['frame'] == 'SELF_MADE'
+                and not row.get('frame_reference_id'), 'conflicting_duplicate_title')
+        require(all(c.get(k) == main.get(k) for k in
+                    ('intent_preserved', 'factual_claims_supported', 'natural_and_meaningful', 'blocking_reasons'))
+                and set(c['evidence_refs']) <= set(main['evidence_refs']), 'conflicting_duplicate_title')
+        removed.append(row)
+    require(bool(removed), 'no_redundant_titles')
+    fixed['compatibility_titles'] = kept
+    return fixed
 
 
 def read(path):
@@ -35,7 +60,10 @@ def require(condition, code):
 
 def assess(original, context, evidence, approval_id, authorize_current):
     require(callable(authorize_current), 'current_governance_required')
-    require(original.status == 'UNKNOWN' and original.validation_issues == ['psychology_mechanism_not_in_library'],
+    title_repair = evidence.get('resolution_kind') == TITLE_REASON
+    require(evidence.get('resolution_kind') in (None, TITLE_REASON), 'unsupported_resolution')
+    failure = 'invalid_candidate_selection' if title_repair else 'psychology_mechanism_not_in_library'
+    require(original.status == 'UNKNOWN' and original.validation_issues == [failure],
             'different_failure_reason')
     authorize_current(context['packet'])
     stage_dir = Path(evidence['stage_directory'])
@@ -45,7 +73,7 @@ def assess(original, context, evidence, approval_id, authorize_current):
     require(request['stage'] == expected, 'identity_mismatch')
     unknown = read(stage_dir/'unknown.json')
     require(all(unknown.get(k) == v for k, v in expected.items()) and
-            unknown.get('issue') == 'psychology_mechanism_not_in_library' and
+            unknown.get('issue') == failure and
             unknown.get('status') == 'CREATIVE_PLAN_UNKNOWN', 'different_failure_reason')
     require(read(stage_dir.parent/'result.json') == original.model_dump(mode='json'), 'original_result_changed')
     cfg = read(evidence['config_path'])
@@ -67,27 +95,46 @@ def assess(original, context, evidence, approval_id, authorize_current):
     require(digest(source) == provenance['source_proposal_sha256'] and read(source) == body['output'], 'artifact_hash_mismatch')
     require(provenance['source_generation'] == original.generation_id and
             provenance['context_hash'] == value_hash(context) and
-            projection['generation_id'] == 'DERIVED-C5.9-FROM-'+original.generation_id, 'projection_lineage_mismatch')
+            projection['generation_id'] == ('DERIVED-RP4-FROM-' if title_repair else 'DERIVED-C5.9-FROM-')+original.generation_id, 'projection_lineage_mismatch')
     assets = request['assets']
-    require([Path(p).as_posix() for p in cfg['read_files']] == [a['path'] for a in assets], 'manifest_mismatch')
+    if title_repair:
+        from .context_packs import manifest, ROOT
+        try:
+            current_assets = manifest(tuple(Path(p) for p in cfg['read_files']), ROOT)
+        except OSError:
+            raise ValueError('reconciliation_source_unavailable') from None
+        require(current_assets == assets, 'manifest_mismatch')
+    else:
+        require([Path(p).as_posix() for p in cfg['read_files']] == [a['path'] for a in assets], 'manifest_mismatch')
     require(all(Path(a['path']).is_file() for a in assets), 'source_unavailable')
     require(all(digest(a['path']) == a['sha256'] for a in assets), 'source_changed')
     plans = PlanStore(evidence['plan_store'])
     approved = plans.approved(approval_id, context, assets)
     require(approved['plan'] == projection and approved['approval_kind'] == 'human', 'plan_approval_mismatch')
-    # Structural validation of the SAME raw artifact, not the later edited plan.
-    validate_proposal(body['output'], context, assets)
-    psychology = body['output']['psychology']
-    library = Path(psychology['library_source']).read_text(encoding='utf8').casefold()
-    mechanisms = [psychology['primary_mechanism'], psychology['optional_secondary_mechanism']]
-    require(any(m and m.casefold() not in library and ' '.join(m.casefold().split()) in ' '.join(library.split())
-                for m in mechanisms), 'not_whitespace_false_negative')
+    if title_repair:
+        # This is an audited derived repair, NOT a claim that the original was valid.
+        try:
+            validate_proposal(body['output'], context, assets)
+        except ValueError as exc:
+            require(str(exc) == failure, 'different_failure_reason')
+        else:
+            require(False, 'original_not_rejected')
+        fixed = validate_proposal(remove_redundant_titles(body['output']), context, assets)
+        require(fixed == projection['proposal'], 'repair_changed_plan_content')
+    else:
+        # Structural validation of the SAME raw artifact, not the later edited plan.
+        validate_proposal(body['output'], context, assets)
+        psychology = body['output']['psychology']
+        library = Path(psychology['library_source']).read_text(encoding='utf8').casefold()
+        mechanisms = [psychology['primary_mechanism'], psychology['optional_secondary_mechanism']]
+        require(any(m and m.casefold() not in library and ' '.join(m.casefold().split()) in ' '.join(library.split())
+                    for m in mechanisms), 'not_whitespace_false_negative')
     paths = [stage_dir/name for name in ('request.json', 'unknown.json', 'events.jsonl',
              'validated-host-result.json', 'permission-review.json', 'batch-content.js')]
     paths += [stage_dir.parent/'result.json', Path(correlation['output_file']), source,
               Path(evidence['projection_path']), Path(evidence['provenance_path']), Path(evidence['config_path'])]
     return dict(generation_id=original.generation_id, original_status='UNKNOWN', resolution=RESOLUTION,
-                reason_code=REASON, original_artifact_hash=value_hash(body['output']),
+                reason_code=TITLE_REASON if title_repair else REASON, original_artifact_hash=value_hash(body['output']),
                 original_artifact_file_sha256=digest(source), packet_id=original.receipt.packet_id,
                 packet_revision=original.receipt.packet_revision, packet_hash=original.receipt.packet_hash,
                 context_hash=original.receipt.context_hash, plan_id=projection['creative_plan_id'],
@@ -95,8 +142,9 @@ def assess(original, context, evidence, approval_id, authorize_current):
                 approval_hash=value_hash(approved), assets=assets, evidence=evidence,
                 evidence_hashes={str(p): digest(p) for p in paths}, correlation=correlation,
                 checks=['terminal_completed', 'exact_correlated_artifact', 'packet_identity', 'context',
-                        'reviewed_artifact_hash', 'unchanged_sources', 'only_known_false_negative',
-                        'fixed_validator_accepts_same_artifact', 'transport_permission_lifecycle_clear',
+                        'reviewed_artifact_hash', 'unchanged_sources',
+                        'only_redundant_appendix_rows_removed' if title_repair else 'only_known_false_negative',
+                        'approved_exact_derived_repair' if title_repair else 'fixed_validator_accepts_same_artifact', 'transport_permission_lifecycle_clear',
                         'projection_lineage', 'current_approval', 'current_governance_selection'])
 
 
@@ -106,7 +154,7 @@ def append(store, generation_id, *, evidence, approval_id, authorize_current, ac
     checked = assess(original, store.context(original.receipt), evidence, approval_id, authorize_current)
     record = dict(checked, reconciliation_id='REC-'+uuid4().hex,
                   resolved_at=datetime.now(timezone.utc).isoformat(), resolver=actor,
-                  validator_version='planner-whitespace-reconciliation.1', validator_commit=validator_commit,
+                  validator_version='planner-bounded-reconciliation.2', validator_commit=validator_commit,
                   validator_source_sha256=digest(__file__))
     record['record_hash'] = value_hash(record)
     with store.connect() as db:
